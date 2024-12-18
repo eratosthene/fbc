@@ -4,7 +4,7 @@ from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 from flask_appbuilder.actions import action
 from app import appbuilder
 from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
-from app.models import DiscogsRelease, DiscogsInstance, Artist, Genre, Style, Folder
+from app.models import DiscogsRelease, Artist, Genre, Style, Folder
 from app.models import DiscogsListing, eBayListing
 
 class SalesReceiptModelView(ModelView):
@@ -19,8 +19,12 @@ class UnitModelView(ModelView):
         'grading',
         'pressing',
         'retail_price',
-        'sold'
+        'sold',
+        'link_column'
     ]
+    label_columns = {
+        'link_column': 'Links'
+    }
 
 class PurchaseLotModelView(ModelView):
     datamodel = MongoEngineInterface(PurchaseLot)
@@ -39,10 +43,25 @@ class StorageBoxModelView(ModelView):
 class DiscogsReleaseModelView(ModelView):
     datamodel = MongoEngineInterface(DiscogsRelease)
     related_views = [ UnitModelView ]
-
-class DiscogsInstanceModelView(ModelView):
-    datamodel = MongoEngineInterface(DiscogsInstance)
-    related_views = [ UnitModelView ]
+    list_columns = [
+        'title',
+        'artists',
+        'year',
+        'master_year',
+        'genres',
+        'styles',
+        'link_column'
+    ]
+    label_columns = {
+        'link_column': 'Links'
+    }
+    edit_columns = [
+        'title',
+        'artists',
+        'year',
+        'master_id',
+        'master_year'        
+    ]
 
 class ArtistModelView(ModelView):
     datamodel = MongoEngineInterface(Artist)
@@ -70,7 +89,7 @@ class FolderModelView(ModelView):
         'folder_id'
     ]
     base_order = ('name', 'desc')
-    related_views = [ DiscogsInstanceModelView ]
+    related_views = [ DiscogsReleaseModelView ]
 
 class DiscogsListingModelView(ModelView):
     datamodel = MongoEngineInterface(DiscogsListing)
@@ -84,7 +103,6 @@ appbuilder.add_view(UnitModelView, "Units", category="Inventory")
 appbuilder.add_view(PurchaseLotModelView, "Purchase Lots", category="Inventory")
 appbuilder.add_view(StorageBoxModelView, "Storage Boxes", category="Inventory")
 appbuilder.add_view(DiscogsReleaseModelView, "Releases", category="Discogs")
-appbuilder.add_view(DiscogsInstanceModelView, "Instances", category="Discogs")
 appbuilder.add_view(ArtistModelView, "Artists", category="Discogs")
 appbuilder.add_view(GenreModelView, "Genres", category="Discogs")
 appbuilder.add_view(StyleModelView, "Styles", category="Discogs")

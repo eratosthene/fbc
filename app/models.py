@@ -1,6 +1,6 @@
 from mongoengine import Document
 from mongoengine import IntField, StringField, ListField, ReferenceField, BooleanField, DictField, FloatField
-from flask import Markup
+from flask import Markup, url_for
 from flask_appbuilder.models.decorators import renders
 
 class Unit(Document):
@@ -8,7 +8,6 @@ class Unit(Document):
     unit_type = StringField()
     description = StringField()
     discogs_release = ReferenceField('DiscogsRelease')
-    discogs_instance = ReferenceField('DiscogsInstance')
     discogs_listing = ReferenceField('DiscogsListing')
     ebay_listing = ReferenceField('eBayListing')
     purchase_lot = ReferenceField('PurchaseLot')
@@ -26,39 +25,71 @@ class Unit(Document):
     def __repr__(self):
         return self.name
 
+    def link_column(self):
+        if self.discogs_release:
+            return Markup(
+                '<ul><li>' + self.discogs_release.release_show(False) + '</li><li>' + self.discogs_release.master_show(False) + '</li></ul>'
+            )
+        else:
+            return Markup('')
+        
 class DiscogsRelease(Document):
     release_id = IntField(required=True, unique=True)
+    title       = StringField(required=True)
     artists     = ListField(ReferenceField('Artist'), required=True)
+    year        = IntField()
     genres      = ListField(ReferenceField('Genre'))
     styles      = ListField(ReferenceField('Style'))
-    title       = StringField(required=True)
-    year        = IntField()
     master_id   = IntField()
     master_year = IntField()
     formats     = ListField(DictField())
     released    = StringField()
-    
-    def __unicode__(self):
-        return self.title
-
-    def __repr__(self):
-        return self.title
-
-    def release_show(self):
-        return Markup(
-            '<a href="https://www.discogs.com/release/' + str(self.release_id) + '">' + str(self.release_id) + '</a>'
-        )
-    
-    def master_show(self):
-        return Markup(
-            '<a href="https://www.discogs.com/master/' + str(self.master_id) + '">' + str(self.master_id) + '</a>'
-        )
-        
-class DiscogsInstance(Document):
-    instance_id = IntField(required=True, unique=True)
+    instance_id = IntField()
     notes       = ListField(DictField())
     folder      = ReferenceField('Folder')
+    
+    def artist_rep(self):
+        num = 0
+        ret = ''
+        for artist in self.artists:
+            if num:
+                ret = ret + ' / '
+            ret = ret + str(artist)
+            num = num + 1
+        return ret
+        
+    def __unicode__(self):
+        return self.artist_rep() + ' - ' + self.title + ' (' + str(self.year) + ')'
 
+    def __repr__(self):
+        return self.artist_rep() + ' - ' + self.title + ' (' + str(self.year) + ')'
+
+    def release_show(self, markup=True):
+        s = '<a href="https://www.discogs.com/release/' + str(self.release_id) + '">Release ' + str(self.release_id) + '</a>'
+        if markup:
+            return Markup(s)
+        else:
+            return s
+    
+    def master_show(self, markup=True):
+        s = '<a href="https://www.discogs.com/master/' + str(self.master_id) + '">Master ' + str(self.master_id) + '</a>'
+        if markup:
+            return Markup(s)
+        else:
+            return s
+        
+    def unit_list(self, markup=True):
+        s = '<a href="' + url_for('UnitModelView.list',_flt_0_discogs_release=str(self.id)) + '">Search Units</a>'
+        if markup:
+            return Markup(s)
+        else:
+            return s
+        
+    def link_column(self):
+        return Markup(
+            '<ul><li>' + self.release_show(False) + '</li><li>' + self.master_show(False) + '</li><li>' + self.unit_list(False) + '</li></ul>'
+        )
+        
 class DiscogsListing(Document):
     discogs_listing_id = IntField(required=True, unique=True)
         

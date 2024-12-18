@@ -3,5 +3,20 @@
 <div class="container">
   <h1>Fire & Bones Collectibles</h1>
   <h2>Total units in stock: {{ stock_total }}</h2>
+  <table class="table table-bordered table-condensed table-hover" style="width: auto">
+    <tr><th>Lot</th><th>Capital</th><th>Sold For</th><th>Fees</th><th>Fees %</th><th>Net Sold</th><th>Profit</th><th>ROI</th></tr>
+{% for lot in lots %}
+    <tr>
+      <td>{{ lot.name }}</td>
+      <td>{{ lot.purchase_price() }}</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+{% endfor %}
+  </table>
 </div>
 {% endblock %}
