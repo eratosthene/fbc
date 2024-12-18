@@ -5,14 +5,9 @@ from flask_appbuilder.actions import action
 from app import appbuilder
 from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
 from app.models import DiscogsRelease, Artist, Genre, Style, Folder
-from app.models import DiscogsListing, eBayListing
-
-class SalesReceiptModelView(ModelView):
-    datamodel = MongoEngineInterface(SalesReceipt)
 
 class UnitModelView(ModelView):
     datamodel = MongoEngineInterface(Unit)
-    related_views = [ SalesReceiptModelView ]
     list_columns = [
         'name',
         'unit_type',
@@ -25,6 +20,25 @@ class UnitModelView(ModelView):
     label_columns = {
         'link_column': 'Links'
     }
+
+class SalesReceiptModelView(ModelView):
+    datamodel = MongoEngineInterface(SalesReceipt)
+    related_views = [ UnitModelView ]
+    list_columns = [
+        'date',
+        'ebay_order',
+        'sold_price',
+        'net_sold'
+    ]
+    label_columns = {
+        'ebay_order': 'eBay Order'
+    }
+    show_columns = [
+        'date',
+        'ebay_order',
+        'sold_price',
+        'net_sold'
+    ]
 
 class PurchaseLotModelView(ModelView):
     datamodel = MongoEngineInterface(PurchaseLot)
@@ -65,6 +79,7 @@ class DiscogsReleaseModelView(ModelView):
 
 class ArtistModelView(ModelView):
     datamodel = MongoEngineInterface(Artist)
+    related_views = [ DiscogsReleaseModelView ]
     list_columns = [
         'name',
         'sort_name',
@@ -91,14 +106,6 @@ class FolderModelView(ModelView):
     base_order = ('name', 'desc')
     related_views = [ DiscogsReleaseModelView ]
 
-class DiscogsListingModelView(ModelView):
-    datamodel = MongoEngineInterface(DiscogsListing)
-    related_views = [ UnitModelView ]
-
-class eBayListingModelView(ModelView):
-    datamodel = MongoEngineInterface(eBayListing)
-    related_views = [ UnitModelView ]
-
 appbuilder.add_view(UnitModelView, "Units", category="Inventory")
 appbuilder.add_view(PurchaseLotModelView, "Purchase Lots", category="Inventory")
 appbuilder.add_view(StorageBoxModelView, "Storage Boxes", category="Inventory")
@@ -108,8 +115,6 @@ appbuilder.add_view(GenreModelView, "Genres", category="Discogs")
 appbuilder.add_view(StyleModelView, "Styles", category="Discogs")
 appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
-appbuilder.add_view(DiscogsListingModelView, "Discogs Listings", category="Sales")
-appbuilder.add_view(eBayListingModelView, "eBay Listings", category="Sales")
 
 
 """

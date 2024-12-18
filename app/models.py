@@ -3,13 +3,34 @@ from mongoengine import IntField, StringField, ListField, ReferenceField, Boolea
 from flask import Markup, url_for
 from flask_appbuilder.models.decorators import renders
 
+class SalesReceipt(Document):
+    date = StringField(required=True)
+    ebay_order_id = StringField()
+    sold_price = FloatField()
+    net_sold = FloatField()
+
+    def __unicode__(self):
+        return self.date + ': ' + self.ebay_order_id + ' $' + f"{self.sold_price:.2f}" + '/$' + f"{self.net_sold:.2f}"
+
+    def __repr__(self):
+        return self.date + ': ' + self.ebay_order_id + ' $' + f"{self.sold_price:.2f}" + '/$' + f"{self.net_sold:.2f}"
+
+    def ebay_order(self, markup=True):
+        ret = ''
+        if self.ebay_order_id:
+            ret = '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.ebay_order_id + '">eBay Order</a>'
+        if markup:
+            return Markup(ret)
+        else:
+            return ret
+
 class Unit(Document):
     name = StringField(required=True)
     unit_type = StringField()
     description = StringField()
     discogs_release = ReferenceField('DiscogsRelease')
-    discogs_listing = ReferenceField('DiscogsListing')
-    ebay_listing = ReferenceField('eBayListing')
+    discogs_listing_id = StringField()
+    ebay_listing_id = StringField()
     purchase_lot = ReferenceField('PurchaseLot')
     storage_box = ReferenceField('StorageBox')
     grading = StringField()
@@ -18,21 +39,28 @@ class Unit(Document):
     notes = StringField()
     retail_price = FloatField()
     sold = BooleanField()
+    sales_receipt = ReferenceField('SalesReceipt')
     
     def __unicode__(self):
-        return self.name
+        return self.name + ' ' + self.unit_type + ' ' + self.pressing + ' ' + self.grading
 
     def __repr__(self):
-        return self.name
+        return self.name + ' ' + self.unit_type + ' ' + self.pressing + ' ' + self.grading
 
     def link_column(self):
+        ret = ''
         if self.discogs_release:
-            return Markup(
-                '<ul><li>' + self.discogs_release.release_show(False) + '</li><li>' + self.discogs_release.master_show(False) + '</li></ul>'
-            )
-        else:
-            return Markup('')
-        
+            ret = ret + self.discogs_release.release_show(False) + '<br/>' + self.discogs_release.master_show(False) + '<br/>'
+        if self.ebay_listing_id:
+            ret = ret + '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing_id) + '">' + str(self.ebay_listing_id) + '</a><br/>'
+        if self.discogs_listing_id:
+            ret = ret + '<a href="https://www.discogs.com/sell/item/' + str(self.discogs_listing_id) + '">' + str(self.discogs_listing_id) + '</a><br/>'
+        if self.sales_receipt:
+            ret = ret + '<a href="' + url_for('SalesReceiptModelView.show',pk=str(self.sales_receipt.id)) + '">Sales Receipt</a><br/>'
+            if self.sales_receipt.ebay_order_id:
+                ret = ret + self.sales_receipt.ebay_order(False)
+        return Markup(ret)
+            
 class DiscogsRelease(Document):
     release_id = IntField(required=True, unique=True)
     title       = StringField(required=True)
@@ -88,22 +116,6 @@ class DiscogsRelease(Document):
     def link_column(self):
         return Markup(
             '<ul><li>' + self.release_show(False) + '</li><li>' + self.master_show(False) + '</li><li>' + self.unit_list(False) + '</li></ul>'
-        )
-        
-class DiscogsListing(Document):
-    discogs_listing_id = IntField(required=True, unique=True)
-        
-    def discogs_show(self):
-        return Markup(
-            '<a href="https://www.discogs.com/sell/item/' + str(self.discogs_listing_id) + '">' + str(self.discogs_listing_id) + '</a>'
-        )
-
-class eBayListing(Document):
-    ebay_listing_id = IntField(required=True, unique=True)
-            
-    def ebay_show(self):
-        return Markup(
-            '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing_id) + '">' + str(self.ebay_listing_id) + '</a>'
         )
         
 class Artist(Document):
@@ -175,12 +187,3 @@ class StorageBox(Document):
 
     def __repr__(self):
         return self.name
-
-class SalesReceipt(Document):
-    date = StringField(required=True)
-    ebay_listing = ReferenceField('eBayListing')
-    discogs_listing = ReferenceField('DiscogsListing')
-    sold_price = FloatField()
-    net_sold = FloatField()
-    units = ListField(ReferenceField('Unit'))
-    
