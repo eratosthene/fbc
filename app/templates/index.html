@@ -8,15 +8,25 @@
 {% for lot in lots %}
     <tr>
       <td>{{ lot.name }}</td>
-      <td>{{ lot.purchase_price() }}</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
+      <td>${{ lot.price|round(2) }}</td>
+      <td>${{ lot_totals[lot.id]['gross']|round(2) }}</td>
+      <td>${{ lot_totals[lot.id]['fees']|round(2) }}</td>
+      <td>{{ lot_totals[lot.id]['feepc']|round(2) }}%</td>
+      <td>${{ lot_totals[lot.id]['net']|round(2) }}</td>
+      <td>${{ lot_totals[lot.id]['profit']|round(2) }}</td>
+      <td>{{ lot_totals[lot.id]['roi']|round(2) }}%</td>
     </tr>
 {% endfor %}
+    <tr>
+      <th>Total</th>
+      <th>${{ totals['capital']|round(2) }}</th>
+      <th>${{ totals['gross']|round(2) }}</th>
+      <th>${{ totals['fees']|round(2) }}</th>
+      <th>{{ totals['feepc']|round(2) }}%</th>
+      <th>${{ totals['net']|round(2) }}</th>
+      <th>${{ totals['profit']|round(2) }}</th>
+      <th>{{ totals['roi']|round(2) }}%</th>
+    </tr>
   </table>
 </div>
 {% endblock %}
