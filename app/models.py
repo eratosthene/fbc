@@ -90,6 +90,12 @@ class SalesReceipt(Document):
     def __repr__(self):
         return self.date + ': ' + self.ebay_order_id + ' $' + f"{self.sold_price:.2f}" + '/$' + f"{self.net_sold:.2f}"
 
+    def fmt_sold_price(self):
+        return '$' + f"{self.sold_price:.2f}"
+        
+    def fmt_net_sold(self):
+        return '$' + f"{self.net_sold:.2f}"
+        
     def ebay_order(self, markup=True):
         ret = ''
         if self.ebay_order_id:
@@ -122,6 +128,9 @@ class Unit(Document):
     def __repr__(self):
         return self.name + ' ' + self.unit_type + ' ' + self.pressing + ' ' + self.grading
 
+    def fmt_retail_price(self):
+        return '$' + f"{self.retail_price:.2f}"
+        
     def link_column(self):
         ret = ''
         if self.discogs_release:

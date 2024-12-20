@@ -23,11 +23,12 @@ class UnitModelView(ModelView):
         'unit_type',
         'grading',
         'pressing',
-        'retail_price',
+        'fmt_retail_price',
         'sold',
         'link_column'
     ]
     label_columns = {
+        'fmt_retail_price': 'Retail Price',
         'link_column': 'Links'
     }
 
@@ -37,11 +38,13 @@ class SalesReceiptModelView(ModelView):
     list_columns = [
         'date',
         'ebay_order',
-        'sold_price',
-        'net_sold'
+        'fmt_sold_price',
+        'fmt_net_sold'
     ]
     label_columns = {
-        'ebay_order': 'eBay Order'
+        'ebay_order': 'eBay:Order',
+        'fmt_sold_price': 'Sold Price',
+        'fmt_net_sold': 'Net Sold'
     }
     show_columns = [
         'date',
