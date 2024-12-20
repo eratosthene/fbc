@@ -7,6 +7,7 @@ from app import appbuilder
 from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
 from app.models import DiscogsRelease, Artist, Genre, Style, Folder
 from app.models import eBayModel, eBaySession
+from app.models import Supply, PurchaseOrder
 import logging
 import ebaysdk
 from ebaysdk.utils import getNodeText
@@ -136,6 +137,26 @@ class eBayModelView(ModelView):
         'fmt_url': 'URL'
     }
     
+class SupplyModelView(ModelView):
+    datamodel = MongoEngineInterface(Supply)
+    list_columns = [
+        'name',
+        'quantity',
+        'purchase_order'
+    ]
+
+class PurchaseOrderModelView(ModelView):
+    datamodel = MongoEngineInterface(PurchaseOrder)
+    list_columns = [
+        'date',
+        'purchase_price',
+        'notes',
+        'link'
+    ]
+    label_columns = {
+        'purchase_price': 'Price'
+    }
+
 appbuilder.add_view(UnitModelView, "Units", category="Inventory")
 appbuilder.add_view(PurchaseLotModelView, "Purchase Lots", category="Inventory")
 appbuilder.add_view(StorageBoxModelView, "Storage Boxes", category="Inventory")
@@ -146,6 +167,8 @@ appbuilder.add_view(StyleModelView, "Styles", category="Discogs")
 appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
 appbuilder.add_view(eBayModelView, "eBay Listings", category="Sales")
+appbuilder.add_view(SupplyModelView, "Supply List", category="Supplies")
+appbuilder.add_view(PurchaseOrderModelView, "Purchase Orders", category="Supplies")
 
 """
     Application wide 404 error handler

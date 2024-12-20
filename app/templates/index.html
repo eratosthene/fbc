@@ -28,5 +28,15 @@
       <th>{{ "{:,.2f}%".format(totals['roi']|float) }}</th>
     </tr>
   </table>
+  <h3>Total supply cost: {{ "${:,.2f}".format(supply_total|float) }}</h3>
+  <h2>Total net profit:
+  {% if (total_net_profit|float < 0) %}
+     <span style="color:red">
+  {% endif %}
+    {{ "${:,.2f}".format(total_net_profit|float) }}
+  {% if (total_net_profit|float < 0) %}
+     </span>
+  {% endif %}
+  </h2>
 </div>
 {% endblock %}

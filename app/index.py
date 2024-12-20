@@ -2,7 +2,7 @@ import logging
 from flask_appbuilder import IndexView
 from flask_appbuilder.views import expose
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
-from app.models import Unit, PurchaseLot, DiscogsRelease
+from app.models import Unit, PurchaseLot, DiscogsRelease, PurchaseOrder
 from flask import redirect
 import bson
 import re
@@ -21,6 +21,8 @@ class MyIndexView(IndexView):
         stock_total = Unit.objects(sold=False).count()
         lots=PurchaseLot.objects()
         lot_totals = {}
+        pos=PurchaseOrder.objects()
+        supply_total = 0
         totals = {
             'capital': 0,
             'gross': 0,
@@ -35,6 +37,8 @@ class MyIndexView(IndexView):
             lot_totals[l.id] = {}
             lot_totals[l.id]['gross'] = 0
             lot_totals[l.id]['net'] = 0
+        for po in pos:
+            supply_total += po.price
         for u in Unit.objects():
             if u.sales_receipt:
                 lot_totals[u.purchase_lot.id]['gross'] += u.sales_receipt.sold_price 
@@ -60,12 +64,15 @@ class MyIndexView(IndexView):
             totals['feepc'] = 0.0
         if totals['capital'] > 0:
             totals['roi'] = round(totals['profit'] / totals['capital'] * 100, 2)
+        total_net_profit = totals['profit'] - supply_total
         return self.render_template(self.index_template,
                 appbuilder=self.appbuilder,
                 stock_total=stock_total,
                 lots=lots,
                 lot_totals=lot_totals,
-                totals=totals
+                totals=totals,
+                supply_total=supply_total,
+                total_net_profit=total_net_profit
         )
 
     @expose('/syncdiscogs')
