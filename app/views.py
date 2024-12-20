@@ -1,10 +1,20 @@
 from flask import render_template
-from flask_appbuilder import ModelView, CompactCRUDMixin
+from flask_appbuilder import ModelView, BaseView, expose, has_access
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 from flask_appbuilder.actions import action
+from flask_appbuilder.models.generic.interface import GenericInterface
 from app import appbuilder
 from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
 from app.models import DiscogsRelease, Artist, Genre, Style, Folder
+from app.models import eBayModel, eBaySession
+import logging
+import ebaysdk
+from ebaysdk.utils import getNodeText
+from ebaysdk.exception import ConnectionError
+from ebaysdk.trading import Connection as Trading
+
+logger = logging.getLogger()
+ebay_session = eBaySession()
 
 class UnitModelView(ModelView):
     datamodel = MongoEngineInterface(Unit)
@@ -106,6 +116,16 @@ class FolderModelView(ModelView):
     base_order = ('name', 'desc')
     related_views = [ DiscogsReleaseModelView ]
 
+class eBayModelView(ModelView):
+    datamodel = GenericInterface(eBayModel, ebay_session)
+    base_permissions = ['can_list', 'can_show']
+    list_columns = ['item_id', 'title', 'fmt_price', 'fmt_url']
+    search_columns = ['item_id', 'title']
+    label_columns = {
+        'fmt_price': 'Price',
+        'fmt_url': 'URL'
+    }
+    
 appbuilder.add_view(UnitModelView, "Units", category="Inventory")
 appbuilder.add_view(PurchaseLotModelView, "Purchase Lots", category="Inventory")
 appbuilder.add_view(StorageBoxModelView, "Storage Boxes", category="Inventory")
@@ -115,7 +135,7 @@ appbuilder.add_view(GenreModelView, "Genres", category="Discogs")
 appbuilder.add_view(StyleModelView, "Styles", category="Discogs")
 appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
-
+appbuilder.add_view(eBayModelView, "eBay Listings", category="Sales")
 
 """
     Application wide 404 error handler
