@@ -12,6 +12,7 @@ import ebaysdk
 from ebaysdk.utils import getNodeText
 from ebaysdk.exception import ConnectionError
 from ebaysdk.trading import Connection as Trading
+from app.widgets import DiscogsReleaseListWidget
 
 logger = logging.getLogger()
 ebay_session = eBaySession()
@@ -69,6 +70,7 @@ class StorageBoxModelView(ModelView):
 
 class DiscogsReleaseModelView(ModelView):
     datamodel = MongoEngineInterface(DiscogsRelease)
+    list_widget = DiscogsReleaseListWidget
     related_views = [ UnitModelView ]
     list_columns = [
         'title',
@@ -87,7 +89,12 @@ class DiscogsReleaseModelView(ModelView):
         'artists',
         'year',
         'master_id',
-        'master_year'        
+        'master_year',
+        'genres',
+        'styles',
+        'instance_id',
+        'released',
+        'folder'
     ]
 
 class ArtistModelView(ModelView):

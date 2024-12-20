@@ -191,7 +191,7 @@ class DiscogsRelease(Document):
             return s
         
     def unit_list(self, markup=True):
-        s = '<a href="' + url_for('UnitModelView.list',_flt_0_discogs_release=str(self.id)) + '">Search Units</a>'
+        s = '<a href="' + url_for('UnitModelView.list',_flt_0_discogs_release=str(self.id)) + '">ListUnits</a>'
         if markup:
             return Markup(s)
         else:
