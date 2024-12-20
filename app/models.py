@@ -112,6 +112,7 @@ class Unit(Document):
     discogs_release = ReferenceField('DiscogsRelease')
     discogs_listing_id = StringField()
     ebay_listing_id = StringField()
+    ebay_draft_url = StringField()
     purchase_lot = ReferenceField('PurchaseLot')
     storage_box = ReferenceField('StorageBox')
     grading = StringField()
@@ -137,6 +138,8 @@ class Unit(Document):
             ret = ret + self.discogs_release.release_show(False) + '<br/>' + self.discogs_release.master_show(False) + '<br/>'
         if self.ebay_listing_id:
             ret = ret + '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing_id) + '">eBay:Listing</a><br/>'
+        if self.ebay_draft_url:
+            ret = ret + '<a href="' + self.ebay_draft_url + '">eBay:Draft</a><br/>'
         if self.discogs_listing_id:
             ret = ret + '<a href="https://www.discogs.com/sell/item/' + str(self.discogs_listing_id) + '">D:Listing</a><br/>'
         if self.sales_receipt:
