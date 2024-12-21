@@ -3,12 +3,14 @@ from mongoengine import IntField, StringField, ListField, ReferenceField, Boolea
 from flask import Markup, url_for
 from flask_appbuilder.models.decorators import renders
 from flask_appbuilder.models.generic import GenericModel, GenericSession, GenericColumn
+from flask_appbuilder.models.generic.interface import GenericInterface
 import ebaysdk
 from ebaysdk.utils import getNodeText
 from ebaysdk.exception import ConnectionError
 from ebaysdk.trading import Connection as Trading
 import logging
 from flask import current_app
+import pprint
 
 logger = logging.getLogger()
 
@@ -33,30 +35,19 @@ class eBayModel(GenericModel):
         )
 
 class eBaySession(GenericSession):
-    def do_query(self):
+    def do_query(self, endpoint=str, options=dict):
         ebayconfig = current_app.config['EBAY_SETTINGS']
         try:
             api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
                           certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
 
-            response = api.execute('GetMyeBaySelling', {
-                'ActiveList': {
-                    'Include': True,
-                    'Sort': 'StartTime',
-                    'Pagination': {
-                        'EntriesPerPage':200,
-                        'PageNumber':1
-                    }
-                }
-            })
-            rdict = response.dict()
-            listings = rdict['ActiveList']['ItemArray']['Item']
+            response = api.execute(endpoint, options)
             logging.info('eBay response: ' + api.response_status())
-            return listings
+            return response.dict()
         except ConnectionError as e:
             logging.error(e)
             logging.error(e.response.dict())
-        
+            
     def _add_object(self, obj):
         model = eBayModel()
         model.item_id = obj['ItemID']
@@ -66,15 +57,35 @@ class eBaySession(GenericSession):
         self.add(model)
     
     def get(self, pk):
-        self.delete_all(eBayModel())
-        for listing in self.do_query():
-            if listing.item_id == pk:
-                self._add_object(listing)
-        return super(eBaySession, self).get(pk)
+        resp = self.do_query('GetItem',{'ItemID':pk})
+        try:
+            listing = resp['Item']
+            logger.debug(pprint.pformat(listing))
+            model = eBayModel()
+            model.item_id = listing['ItemID']
+            model.title = listing['Title']
+            model.price = float(listing['ListingDetails']['ConvertedStartPrice']['value'])
+            model.url = listing['ListingDetails']['ViewItemURL']
+            logger.debug(model)
+            return model
+        except Exception as e:
+            logging.error(e)
+            return None
         
     def all(self):
         self.delete_all(eBayModel())
-        for listing in self.do_query():
+        resp = self.do_query('GetMyeBaySelling', {
+            'ActiveList': {
+                'Include': True,
+                'Sort': 'StartTime',
+                'Pagination': {
+                    'EntriesPerPage':200,
+                    'PageNumber':1
+                }
+            }
+        })
+        listings = resp['ActiveList']['ItemArray']['Item']
+        for listing in listings:
             self._add_object(listing)
         return super(eBaySession, self).all()
 
@@ -130,14 +141,23 @@ class Unit(Document):
         return self.name + ' ' + self.unit_type + ' ' + self.pressing + ' ' + self.grading
 
     def fmt_retail_price(self):
-        return '$' + f"{self.retail_price:.2f}"
+        if self.retail_price:
+            return '$' + f"{self.retail_price:.2f}"
+        else:
+            return None
         
     def link_column(self):
+        ebay_session = eBaySession()
+        ebay = GenericInterface(eBayModel, ebay_session)
         ret = ''
         if self.discogs_release:
             ret = ret + self.discogs_release.release_show(False) + '<br/>' + self.discogs_release.master_show(False) + '<br/>'
         if self.ebay_listing_id:
-            ret = ret + '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing_id) + '">eBay:Listing</a><br/>'
+            ret = ret + '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing_id) + '">eBay:Listing'
+            l = ebay.get(self.ebay_listing_id)
+            if l:
+                ret = ret + '&nbsp;$' + f"{l.price:.2f}"
+            ret = ret + '</a><br/>'
         if self.ebay_draft_url:
             ret = ret + '<a href="' + self.ebay_draft_url + '">eBay:Draft</a><br/>'
         if self.discogs_listing_id:
