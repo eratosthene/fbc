@@ -94,6 +94,11 @@ class MyIndexView(IndexView):
         for item in local_releases:
             logger.debug('Checking local: ' + str(item))
             if not any(x.instance_id == item.instance_id for x in releases):
+                units = Unit.objects().get(discogs_release=item)
+                for unit in units:
+                    logger.info('Updating ' + str(unit))
+                    del unit.discogs_release
+                    unit.save()
                 logger.info('Removing ' + str(item))
                 item.delete()
         
