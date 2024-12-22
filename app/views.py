@@ -6,7 +6,7 @@ from flask_appbuilder.models.generic.interface import GenericInterface
 from app import appbuilder
 from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
 from app.models import DiscogsRelease, Artist, Genre, Style, Folder
-from app.models import eBayModel, eBaySession
+from app.models import eBayModel, eBaySession, eBayOrderModel, eBayOrderSession
 from app.models import Supply, PurchaseOrder
 import logging
 import ebaysdk
@@ -17,6 +17,7 @@ from app.widgets import DiscogsReleaseListWidget
 
 logger = logging.getLogger()
 ebay_session = eBaySession()
+ebay_order_session = eBayOrderSession()
 
 class UnitModelView(ModelView):
     datamodel = MongoEngineInterface(Unit)
@@ -137,6 +138,16 @@ class eBayModelView(ModelView):
         'fmt_url': 'URL'
     }
     
+class eBayOrderModelView(ModelView):
+    datamodel = GenericInterface(eBayOrderModel, ebay_order_session)
+    base_permissions = ['can_list', 'can_show']
+    list_columns = ['date', 'fmt_url', 'buyer', 'fmt_price']
+    search_columns = ['order_id', 'buyer']
+    label_columns = {
+        'fmt_price': 'Price',
+        'fmt_url': 'Order Id'
+    }
+    
 class SupplyModelView(ModelView):
     datamodel = MongoEngineInterface(Supply)
     list_columns = [
@@ -167,6 +178,7 @@ appbuilder.add_view(StyleModelView, "Styles", category="Discogs")
 appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
 appbuilder.add_view(eBayModelView, "eBay Listings", category="Sales")
+appbuilder.add_view(eBayOrderModelView, "eBay Orders", category="Sales")
 appbuilder.add_view(SupplyModelView, "Supply List", category="Supplies")
 appbuilder.add_view(PurchaseOrderModelView, "Purchase Orders", category="Supplies")
 

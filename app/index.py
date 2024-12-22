@@ -94,11 +94,16 @@ class MyIndexView(IndexView):
         for item in local_releases:
             logger.debug('Checking local: ' + str(item))
             if not any(x.instance_id == item.instance_id for x in releases):
-                units = Unit.objects().get(discogs_release=item)
-                for unit in units:
-                    logger.info('Updating ' + str(unit))
-                    del unit.discogs_release
-                    unit.save()
+                o = Unit.objects().get(discogs_release=item)
+                if isinstance(o, Unit):
+                    logger.info('Updating ' + str(o))
+                    del o.discogs_release
+                    o.save()
+                else:    
+                    for unit in o:
+                        logger.info('Updating ' + str(unit))
+                        del unit.discogs_release
+                        unit.save()
                 logger.info('Removing ' + str(item))
                 item.delete()
         

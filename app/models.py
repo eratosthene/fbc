@@ -11,6 +11,7 @@ from ebaysdk.trading import Connection as Trading
 import logging
 from flask import current_app
 import pprint
+import datetime
 
 logger = logging.getLogger()
 
@@ -89,6 +90,80 @@ class eBaySession(GenericSession):
             self._add_object(listing)
         return super(eBaySession, self).all()
 
+class eBayOrderModel(GenericModel):
+    order_id = GenericColumn(str, primary_key=True)
+    date = GenericColumn(str)
+    buyer = GenericColumn(str)
+    price = GenericColumn(float)
+
+    def __unicode__(self):
+        return self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
+
+    def __repr__(self):
+        return self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
+        
+    def fmt_price(self):
+        return '$' + f"{self.price:.2f}"
+        
+    def fmt_url(self):
+        return Markup(
+            '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.order_id + '">' + self.order_id + '</a>'
+        )
+class eBayOrderSession(GenericSession):
+    def do_query(self, endpoint=str, options=dict):
+        ebayconfig = current_app.config['EBAY_SETTINGS']
+        try:
+            api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
+                          certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
+
+            response = api.execute(endpoint, options)
+            logging.info('eBay response: ' + api.response_status())
+            return response.dict()
+        except ConnectionError as e:
+            logging.error(e)
+            logging.error(e.response.dict())
+            
+    def _add_object(self, obj):
+        model = eBayOrderModel()
+        model.order_id = obj['OrderID']
+        model.price = float(obj['Subtotal']['value'])
+        model.buyer = obj['BuyerUserID']
+        model.date = obj['CreatedTime'][:10]
+        self.add(model)
+    
+    def get(self, pk):
+        resp = self.do_query('GetOrders',{'OrderIDArray':[{'OrderID':pk}]})
+        try:
+            order = resp['OrderArray']['Order'][0]
+            logger.debug(pprint.pformat(order))
+            model = eBayOrderModel()
+            model.order_id = order['OrderID']
+            model.price = float(order['Subtotal']['value'])
+            model.buyer = order['BuyerUserID']
+            model.date = order['CreatedTime'][:10]
+            logger.debug(model)
+            return model
+        except Exception as e:
+            logging.error(e)
+            return None
+        
+    def all(self):
+        self.delete_all(eBayOrderModel())
+        # currentTime = datetime.datetime.now()+datetime.timedelta(hours = 5)
+        # startTime = currentTime + datetime.timedelta(days = -89)
+        resp = self.do_query('GetOrders', {
+            # 'CreateTimeFrom': str(startTime)[0:19],
+            # 'CreateTimeTo': str(currentTime)[0:19],
+            'NumberOfDays': 30,
+            'OrderStatus': 'Completed'
+        })
+        with open('log.txt', 'w') as out:
+            out.write(pprint.pformat(resp))
+        orders = resp['OrderArray']['Order']
+        for order in orders:
+            self._add_object(order)
+        return super(eBayOrderSession, self).all()
+
 class SalesReceipt(Document):
     date = StringField(required=True)
     ebay_order_id = StringField()
@@ -110,7 +185,13 @@ class SalesReceipt(Document):
     def ebay_order(self, markup=True):
         ret = ''
         if self.ebay_order_id:
-            ret = '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.ebay_order_id + '">eBay:Order</a>'
+            ret = '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.ebay_order_id + '">eBay:Order'
+            ebay_order_session = eBayOrderSession()
+            ebay_order = GenericInterface(eBayOrderModel, ebay_order_session)
+            l = ebay_order.get(self.ebay_order_id)
+            if l:
+                ret = ret + '&nbsp;$' + f"{l.price:.2f}"
+            ret = ret + '</a>'
         if markup:
             return Markup(ret)
         else:
@@ -163,7 +244,7 @@ class Unit(Document):
         if self.discogs_listing_id:
             ret = ret + '<a href="https://www.discogs.com/sell/item/' + str(self.discogs_listing_id) + '">D:Listing</a><br/>'
         if self.sales_receipt:
-            ret = ret + '<a href="' + url_for('SalesReceiptModelView.show',pk=str(self.sales_receipt.id)) + '">SalesReceipt</a><br/>'
+            ret = ret + '<a href="' + url_for('SalesReceiptModelView.show',pk=str(self.sales_receipt.id)) + '">SalesReceipt&nbsp$' + f"{self.sales_receipt.net_sold:.2f}" + '</a><br/>'
             if self.sales_receipt.ebay_order_id:
                 ret = ret + self.sales_receipt.ebay_order(False)
         return Markup(ret)
