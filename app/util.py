@@ -1,9 +1,49 @@
-from app.models import *
+from app.models.discogs import Artist, Folder, Genre, Style, DiscogsRelease
+from app.models.ebay import eBayListing, eBayOrder
 from mongoengine import DoesNotExist
 import logging
+from flask import current_app
+import ebaysdk
+from ebaysdk.exception import ConnectionError
+from ebaysdk.trading import Connection as Trading
 
+logger = logging.getLogger()
+
+def add_ebay_listing(item):
+    item_id = item['ItemID']
+    title = item['Title']
+    price = float(item['BuyItNowPrice']['value'])
+    url = item['ListingDetails']['ViewItemURL']
+    
+    ebay_listing = eBayListing.objects(item_id=item_id).modify(
+            upsert = True,
+            new = True,
+            set__item_id = item_id,
+            set__price = price,
+            set__title = title,
+            set__url = url,
+            )
+    ebay_listing.save()
+    logger.debug(ebay_listing)
+    
+def add_ebay_order(item):
+    order_id = item['OrderID']
+    price = float(item['Subtotal']['value'])
+    buyer = item['BuyerUserID']
+    date = item['CreatedTime'][:10]
+    
+    ebay_order = eBayOrder.objects(order_id=order_id).modify(
+            upsert = True,
+            new = True,
+            set__order_id = order_id,
+            set__price = price,
+            set__buyer = buyer,
+            set__date = date,
+            )
+    ebay_order.save()
+    logger.debug(ebay_order)
+    
 def add_discogs_release(item):
-    logger = logging.getLogger()
     folder = Folder.objects().get(folder_id=item.folder_id)
     artists = []
     genres = []
@@ -64,4 +104,4 @@ def add_discogs_release(item):
             set__notes = item.notes
             )
     discogs_release.save()
-    print(discogs_release)
+    logger.debug(discogs_release)

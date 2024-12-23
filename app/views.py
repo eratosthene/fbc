@@ -4,20 +4,15 @@ from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 from flask_appbuilder.actions import action
 from flask_appbuilder.models.generic.interface import GenericInterface
 from app import appbuilder
-from app.models import Unit, PurchaseLot, StorageBox, SalesReceipt
-from app.models import DiscogsRelease, Artist, Genre, Style, Folder
-from app.models import eBayModel, eBaySession, eBayOrderModel, eBayOrderSession
-from app.models import Supply, PurchaseOrder
+from app.models.inventory import Unit, PurchaseLot, StorageBox
+from app.models.discogs import DiscogsRelease, Artist, Genre, Style, Folder
+from app.models.ebay import eBayListing, eBayOrder
+from app.models.sales import SalesReceipt
+from app.models.supplies import Supply, PurchaseOrder
 import logging
-import ebaysdk
-from ebaysdk.utils import getNodeText
-from ebaysdk.exception import ConnectionError
-from ebaysdk.trading import Connection as Trading
-from app.widgets import DiscogsReleaseListWidget
+from app.widgets import DiscogsReleaseListWidget, eBayListingListWidget, eBayOrderListWidget
 
 logger = logging.getLogger()
-ebay_session = eBaySession()
-ebay_order_session = eBayOrderSession()
 
 class UnitModelView(ModelView):
     datamodel = MongoEngineInterface(Unit)
@@ -40,12 +35,12 @@ class SalesReceiptModelView(ModelView):
     related_views = [ UnitModelView ]
     list_columns = [
         'date',
-        'ebay_order',
+        'fmt_ebay_order',
         'fmt_sold_price',
         'fmt_net_sold'
     ]
     label_columns = {
-        'ebay_order': 'eBay:Order',
+        'fmt_ebay_order': 'eBay:Order',
         'fmt_sold_price': 'Sold Price',
         'fmt_net_sold': 'Net Sold'
     }
@@ -128,19 +123,19 @@ class FolderModelView(ModelView):
     base_order = ('name', 'desc')
     related_views = [ DiscogsReleaseModelView ]
 
-class eBayModelView(ModelView):
-    datamodel = GenericInterface(eBayModel, ebay_session)
-    base_permissions = ['can_list', 'can_show']
+class eBayListingModelView(ModelView):
+    datamodel = MongoEngineInterface(eBayListing)
+    list_widget = eBayListingListWidget
     list_columns = ['item_id', 'title', 'fmt_price', 'fmt_url']
     search_columns = ['item_id', 'title']
     label_columns = {
         'fmt_price': 'Price',
         'fmt_url': 'URL'
     }
-    
+
 class eBayOrderModelView(ModelView):
-    datamodel = GenericInterface(eBayOrderModel, ebay_order_session)
-    base_permissions = ['can_list', 'can_show']
+    datamodel = MongoEngineInterface(eBayOrder)
+    list_widget = eBayOrderListWidget
     list_columns = ['date', 'fmt_url', 'buyer', 'fmt_price']
     search_columns = ['order_id', 'buyer']
     label_columns = {
@@ -177,7 +172,7 @@ appbuilder.add_view(GenreModelView, "Genres", category="Discogs")
 appbuilder.add_view(StyleModelView, "Styles", category="Discogs")
 appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
-appbuilder.add_view(eBayModelView, "eBay Listings", category="Sales")
+appbuilder.add_view(eBayListingModelView, "eBay Listings", category="Sales")
 appbuilder.add_view(eBayOrderModelView, "eBay Orders", category="Sales")
 appbuilder.add_view(SupplyModelView, "Supply List", category="Supplies")
 appbuilder.add_view(PurchaseOrderModelView, "Purchase Orders", category="Supplies")
