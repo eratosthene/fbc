@@ -31,6 +31,7 @@ def add_ebay_order(item):
     price = float(item['Subtotal']['value'])
     buyer = item['BuyerUserID']
     date = item['CreatedTime'][:10]
+    title = item['TransactionArray']['Transaction'][0]['Item']['Title']
     
     ebay_order = eBayOrder.objects(order_id=order_id).modify(
             upsert = True,
@@ -39,6 +40,7 @@ def add_ebay_order(item):
             set__price = price,
             set__buyer = buyer,
             set__date = date,
+            set__title = title
             )
     ebay_order.save()
     logger.debug(ebay_order)

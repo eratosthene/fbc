@@ -136,8 +136,8 @@ class eBayListingModelView(ModelView):
 class eBayOrderModelView(ModelView):
     datamodel = MongoEngineInterface(eBayOrder)
     list_widget = eBayOrderListWidget
-    list_columns = ['date', 'fmt_url', 'buyer', 'fmt_price']
-    search_columns = ['order_id', 'buyer']
+    list_columns = ['date', 'fmt_url', 'title', 'buyer', 'fmt_price']
+    search_columns = ['order_id', 'title', 'buyer']
     label_columns = {
         'fmt_price': 'Price',
         'fmt_url': 'Order Id'

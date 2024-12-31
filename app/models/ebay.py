@@ -31,12 +31,19 @@ class eBayOrder(Document):
     date = StringField()
     buyer = StringField()
     price = FloatField()
+    title = StringField()
 
     def __unicode__(self):
-        return self.date + ' ' + self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
+        if self.title:
+            return self.date + ' ' + self.order_id + ' [' + self.title[:45] + ']: ' + self.buyer + ' $' + f"{self.price:.2f}"
+        else:
+            return self.date + ' ' + self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
 
     def __repr__(self):
-        return self.date + ' ' + self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
+        if self.title:
+            return self.date + ' ' + self.order_id + ' [' + self.title[:45] + ']: ' + self.buyer + ' $' + f"{self.price:.2f}"
+        else:
+            return self.date + ' ' + self.order_id + ': ' + self.buyer + ' $' + f"{self.price:.2f}"
         
     def fmt_price(self):
         return '$' + f"{self.price:.2f}"
