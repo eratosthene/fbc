@@ -29,6 +29,8 @@
     </tr>
   </table>
   <h3>Total supply cost: {{ "${:,.2f}".format(supply_total|float) }}</h3>
+  <h3>Supply cost per unit ({{ unit_total }} units): {{ "${:,.2f}".format(supply_total/unit_total|float) }}</h3>
+  <h4>Breakeven per unit, including supplies: {{ "${:,.2f}".format((totals['capital']/unit_total/(1-totals['feepc']/100))+(supply_total/unit_total)|float) }}</h4>
   <h2>Total net profit:
   {% if (total_net_profit|float < 0) %}
      <span style="color:red">

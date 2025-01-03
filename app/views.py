@@ -58,8 +58,26 @@ class PurchaseLotModelView(ModelView):
         'name', 
         'date', 
         'purchase_price', 
-        'notes'
+        'notes',
+        'list_total',
+        'list_sold',
+        'list_profit',
+        'list_breakeven'
     ]
+    show_columns = [
+        'name', 
+        'date', 
+        'purchase_price', 
+        'notes',
+        'breakdown'
+    ]
+    label_columns = {
+        'breakdown': 'Breakdown',
+        'list_total': 'Units',
+        'list_sold': 'Sold',
+        'list_profit': 'Profit',
+        'list_breakeven': 'B/E'
+    }
 
 class StorageBoxModelView(ModelView):
     datamodel = MongoEngineInterface(StorageBox)

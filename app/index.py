@@ -28,6 +28,7 @@ class MyIndexView(IndexView):
     def index(self):
         self.update_redirect()
         stock_total = Unit.objects(sold=False).count()
+        unit_total = Unit.objects().count()
         lots=PurchaseLot.objects()
         lot_totals = {}
         pos=PurchaseOrder.objects()
@@ -81,7 +82,8 @@ class MyIndexView(IndexView):
                 lot_totals=lot_totals,
                 totals=totals,
                 supply_total=supply_total,
-                total_net_profit=total_net_profit
+                total_net_profit=total_net_profit,
+                unit_total=unit_total
         )
 
     @expose('/syncdiscogs')

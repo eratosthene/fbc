@@ -9,6 +9,13 @@ from ebaysdk.trading import Connection as Trading
 
 logger = logging.getLogger()
 
+def fprice(num):
+    return '$' + f"{num:.2f}"
+    
+def fpercent(num):
+    np = num * 100.0
+    return f"{np:.2f}" + '%'
+    
 def add_ebay_listing(item):
     item_id = item['ItemID']
     title = item['Title']
