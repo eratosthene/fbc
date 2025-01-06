@@ -10,7 +10,7 @@ from flask import redirect
 import bson
 import re
 import discogs_client
-from flask import current_app
+from flask import current_app, request
 from app.util import *
 import ebaysdk
 from ebaysdk.utils import getNodeText
@@ -118,7 +118,11 @@ class MyIndexView(IndexView):
                 logger.info('Removing ' + str(item))
                 item.delete()
         
-        return redirect('/discogsreleasemodelview/list/')
+        ref = request.referrer
+        if ref:
+            return redirect(ref)
+        else:
+            return redirect('/discogsreleasemodelview/list/')
 
     @expose('/syncebaylistings')
     def syncebaylistings(self):
@@ -154,15 +158,56 @@ class MyIndexView(IndexView):
         except ConnectionError as e:
             logging.error(e)
             logging.error(e.response.dict())
-        return redirect('/ebaylistingmodelview/list/')
+        ref = request.referrer
+        if ref:
+            return redirect(ref)
+        else:
+            return redirect('/ebaylistingmodelview/list/')
 
+    def doebaysync(self, api, response):
+        logging.info('eBay response: ' + api.response_status())
+        resp = response.dict()
+        orders = resp['OrderArray']['Order']
+        local_orders = eBayOrder.objects()
+        logger.info('Total orders: ' + str(len(orders)))
+        logger.info('Total local orders: ' + str(len(local_orders)))
+        for item in orders:
+            # logger.info(item)
+            logger.debug('Checking ebay: ' + str(item['OrderID']))
+            if not eBayOrder.objects(order_id=item['OrderID']):
+                logger.info('Adding ' + str(item['OrderID']))
+                add_ebay_order(item)
+        
     @expose('/syncebayorders')
     def syncebayorders(self):
         self.update_redirect()
         logger.info('Updating eBay orders...')
         ebayconfig = current_app.config['EBAY_SETTINGS']
         try:
-            currentTime = datetime.datetime.now()+datetime.timedelta(hours = 5)
+            api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
+                          certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
+
+            response = api.execute('GetOrders', {
+                'NumberOfDays': 10,
+                'OrderStatus': 'Completed'
+            })
+            self.doebaysync(api, response)
+        except ConnectionError as e:
+            logging.error(e)
+            logging.error(e.response.dict())
+        ref = request.referrer
+        if ref:
+            return redirect(ref)
+        else:
+            return redirect('/ebayordermodelview/list/')
+
+    @expose('/syncebayordersdeep')
+    def syncebayordersdeep(self):
+        self.update_redirect()
+        logger.info('Deep updating eBay orders...')
+        ebayconfig = current_app.config['EBAY_SETTINGS']
+        try:
+            currentTime = datetime.datetime.now()+datetime.timedelta(hours = 7)
             startTime = currentTime + datetime.timedelta(days = -89)
             api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
                           certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
@@ -170,22 +215,14 @@ class MyIndexView(IndexView):
             response = api.execute('GetOrders', {
                 'CreateTimeFrom': str(startTime)[0:19],
                 'CreateTimeTo': str(currentTime)[0:19],
-                # 'NumberOfDays': 30,
                 'OrderStatus': 'Completed'
             })
-            logging.info('eBay response: ' + api.response_status())
-            resp = response.dict()
-            orders = resp['OrderArray']['Order']
-            local_orders = eBayOrder.objects()
-            logger.info('Total orders: ' + str(len(orders)))
-            logger.info('Total local orders: ' + str(len(local_orders)))
-            for item in orders:
-                # logger.info(item)
-                logger.debug('Checking ebay: ' + str(item['OrderID']))
-                if not eBayOrder.objects(order_id=item['OrderID']):
-                    logger.info('Adding ' + str(item['OrderID']))
-                    add_ebay_order(item)
+            self.doebaysync(api, response)
         except ConnectionError as e:
             logging.error(e)
             logging.error(e.response.dict())
-        return redirect('/ebayordermodelview/list/')
+        ref = request.referrer
+        if ref:
+            return redirect(ref)
+        else:
+            return redirect('/ebayordermodelview/list/')
