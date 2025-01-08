@@ -1,6 +1,9 @@
 from mongoengine import Document
 from mongoengine import IntField, StringField, ListField, ReferenceField, BooleanField, DictField, FloatField
 from flask import Markup, url_for
+import logging
+
+logger = logging.getLogger()
 
 class DiscogsRelease(Document):
     release_id = IntField(required=True, unique=True)
@@ -58,6 +61,19 @@ class DiscogsRelease(Document):
         return Markup(
             '<ul><li>' + self.release_show(False) + '</li><li>' + self.master_show(False) + '</li><li>' + self.unit_list(False) + '</li></ul>'
         )
+    
+    def purchase_lot(self):
+        from app.models.inventory import Unit
+        ret = ''
+        try:
+            unit = Unit.objects().get(discogs_release=self)
+            if unit:
+                pl = unit.purchase_lot
+                ret = unit.purchase_lot.name
+        except Exception as e:
+            logger.error(self.title)
+            logger.error(e)
+        return Markup(ret)
         
 class Artist(Document):
     artist_id   = IntField(required=True, unique=True)

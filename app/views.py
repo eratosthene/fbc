@@ -23,12 +23,28 @@ class UnitModelView(ModelView):
         'pressing',
         'fmt_retail_price',
         'sold',
+        'purchase_lot',
+        'storage_box',
         'link_column'
     ]
     label_columns = {
         'fmt_retail_price': 'Retail Price',
         'link_column': 'Links'
     }
+    search_columns = [
+        'name',
+        'unit_type',
+        'description',
+        'discogs_release',
+        'ebay_listing',
+        'purchase_lot',
+        'storage_box',
+        'grading',
+        'pressing',
+        'matrix',
+        'notes',
+        'sold'
+    ]
 
 class SalesReceiptModelView(ModelView):
     datamodel = MongoEngineInterface(SalesReceipt)
@@ -94,6 +110,7 @@ class DiscogsReleaseModelView(ModelView):
         'master_year',
         'genres',
         'styles',
+        'purchase_lot',
         'link_column'
     ]
     label_columns = {
