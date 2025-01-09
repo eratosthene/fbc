@@ -43,6 +43,7 @@ class UnitModelView(ModelView):
         'pressing',
         'matrix',
         'notes',
+        'retail_price',
         'sold'
     ]
 

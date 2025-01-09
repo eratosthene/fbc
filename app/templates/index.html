@@ -1,8 +1,47 @@
+{% import 'appbuilder/general/lib.html' as lib %}
 {% extends "appbuilder/base.html" %}
 {% block content %}
 <div class="container">
   <h1>Fire & Bones Collectibles</h1>
   <h2>Total units in stock: {{ stock_total }}</h2>
+{% call lib.accordion_tag("stockbypurchaselot","Stock Details (by purchase lot)", False) %}
+  <table class="table table-bordered table-condensed table-hover" style="width: auto">
+    <tr><th>Lot</th><th>Stock</th></tr>
+{% for lot in lots %}
+    <tr>
+      <td>{{ lot.name }}</td>
+      <td>{{ lot_totals[lot.id]['instock'] }}</td>
+    </tr>
+{% endfor %}
+  </table>
+{% endcall %}
+{% call lib.accordion_tag("stockbystoragebox","Stock Details (by storage box)", False) %}
+<pre>{{ box_totals }}</pre>
+  <table class="table table-bordered table-condensed table-hover" style="width: auto">
+    <tr><th>Box</th><th>Stock</th></tr>
+{% for box in box_totals %}
+    <tr>
+      <td>{{ box_totals[box]['name'] }}</td>
+      <td>{{ box_totals[box]['instock'] }}</td>
+    </tr>
+{% endfor %}
+  </table>
+{% endcall %}
+  <h2>Total supply cost: {{ "${:,.2f}".format(supply_total|float) }}</h2>
+{% call lib.accordion_tag("supplydetails","Supply Details", False) %}
+  <h3>Supply cost per unit ({{ unit_total }} units): {{ "${:,.2f}".format(supply_total/unit_total|float) }}</h3>
+  <h4>Breakeven per unit, including supplies: {{ "${:,.2f}".format((totals['capital']/unit_total/(1-totals['feepc']/100))+(supply_total/unit_total)|float) }}</h4>
+{% endcall %}
+  <h2>Total net profit:
+  {% if (total_net_profit|float < 0) %}
+     <span style="color:red">
+  {% endif %}
+    {{ "${:,.2f}".format(total_net_profit|float) }}
+  {% if (total_net_profit|float < 0) %}
+     </span>
+  {% endif %}
+  </h2>
+{% call lib.accordion_tag("profitdetails","Profit Details", False) %}
   <table class="table table-bordered table-condensed table-hover" style="width: auto">
     <tr><th>Lot</th><th>Capital</th><th>Sold For</th><th>Fees</th><th>Fees %</th><th>Net Sold</th><th>Profit</th><th>ROI</th></tr>
 {% for lot in lots %}
@@ -28,17 +67,6 @@
       <th>{{ "{:,.2f}%".format(totals['roi']|float) }}</th>
     </tr>
   </table>
-  <h3>Total supply cost: {{ "${:,.2f}".format(supply_total|float) }}</h3>
-  <h3>Supply cost per unit ({{ unit_total }} units): {{ "${:,.2f}".format(supply_total/unit_total|float) }}</h3>
-  <h4>Breakeven per unit, including supplies: {{ "${:,.2f}".format((totals['capital']/unit_total/(1-totals['feepc']/100))+(supply_total/unit_total)|float) }}</h4>
-  <h2>Total net profit:
-  {% if (total_net_profit|float < 0) %}
-     <span style="color:red">
-  {% endif %}
-    {{ "${:,.2f}".format(total_net_profit|float) }}
-  {% if (total_net_profit|float < 0) %}
-     </span>
-  {% endif %}
-  </h2>
+{% endcall %}
 </div>
 {% endblock %}

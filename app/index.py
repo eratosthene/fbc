@@ -2,7 +2,7 @@ import logging
 from flask_appbuilder import IndexView
 from flask_appbuilder.views import expose
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
-from app.models.inventory import Unit, PurchaseLot
+from app.models.inventory import Unit, PurchaseLot, StorageBox
 from app.models.discogs import DiscogsRelease
 from app.models.supplies import PurchaseOrder
 from app.models.ebay import eBayListing, eBayOrder
@@ -30,6 +30,8 @@ class MyIndexView(IndexView):
         stock_total = Unit.objects(sold=False).count()
         unit_total = Unit.objects().count()
         lots=PurchaseLot.objects()
+        boxes=StorageBox.objects()
+        box_totals = {}
         lot_totals = {}
         pos=PurchaseOrder.objects()
         supply_total = 0
@@ -75,6 +77,15 @@ class MyIndexView(IndexView):
         if totals['capital'] > 0:
             totals['roi'] = round(totals['profit'] / totals['capital'] * 100, 2)
         total_net_profit = totals['profit'] - supply_total
+        for l in lots:
+            lot_totals[l.id]['instock'] = Unit.objects(purchase_lot=l, sold=False).count()
+        for b in boxes:
+            box_totals[b.id] = {}
+            box_totals[b.id]['name'] = b.name
+            box_totals[b.id]['instock'] = Unit.objects(storage_box=b, sold=False).count()
+        box_totals[0] = {}
+        box_totals[0]['name'] = 'None'
+        box_totals[0]['instock'] = Unit.objects(storage_box=None, sold=False).count()
         return self.render_template(self.index_template,
                 appbuilder=self.appbuilder,
                 stock_total=stock_total,
@@ -83,7 +94,8 @@ class MyIndexView(IndexView):
                 totals=totals,
                 supply_total=supply_total,
                 total_net_profit=total_net_profit,
-                unit_total=unit_total
+                unit_total=unit_total,
+                box_totals=box_totals
         )
 
     @expose('/syncdiscogs')
