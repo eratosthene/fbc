@@ -1,4 +1,4 @@
-from app.models.discogs import DiscogsRelease
+from app.models.discogs import DiscogsRelease, DiscogsListing
 from app.models.sales import SalesReceipt
 from app.models.ebay import eBayListing
 from app.util import fprice, fpercent
@@ -12,7 +12,7 @@ class Unit(Document):
     unit_type = StringField()
     description = StringField()
     discogs_release = ReferenceField('DiscogsRelease')
-    discogs_listing_id = StringField()
+    discogs_listing = ReferenceField('DiscogsListing')
     ebay_listing = ReferenceField('eBayListing')
     ebay_draft_url = StringField()
     purchase_lot = ReferenceField('PurchaseLot')
@@ -42,11 +42,11 @@ class Unit(Document):
         if self.discogs_release:
             ret = ret + self.discogs_release.release_show(False) + '<br/>' + self.discogs_release.master_show(False) + '<br/>'
         if self.ebay_listing:
-            ret = ret + '<a href="https://www.ebay.com/itm/' + str(self.ebay_listing.item_id) + '">eBay:Listing&nbsp;$' + f"{self.ebay_listing.price:.2f}"'</a><br/>'
+            ret = ret + '<a href="' + self.ebay_listing.url + '">eBay:Listing&nbsp;$' + f"{self.ebay_listing.price:.2f}"'</a><br/>'
         if self.ebay_draft_url:
             ret = ret + '<a href="' + self.ebay_draft_url + '">eBay:Draft</a><br/>'
-        if self.discogs_listing_id:
-            ret = ret + '<a href="https://www.discogs.com/sell/item/' + str(self.discogs_listing_id) + '">D:Listing</a><br/>'
+        if self.discogs_listing:
+            ret = ret + '<a href="' + self.discogs_listing.url + '">D:Listing&nbsp;$' + f"{self.discogs_listing.price:.2f}"'</a><br/>'
         if self.sales_receipt:
             ret = ret + '<a href="' + url_for('SalesReceiptModelView.show',pk=str(self.sales_receipt.id)) + '">SalesReceipt&nbsp$' + f"{self.sales_receipt.net_sold:.2f}" + '</a><br/>'
             if self.sales_receipt.ebay_order:

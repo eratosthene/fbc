@@ -8,3 +8,9 @@ class eBayListingListWidget(ListWidget):
 
 class eBayOrderListWidget(ListWidget):
      template = 'widgets/e_o_list.html'
+
+class DiscogsListingListWidget(ListWidget):
+     template = 'widgets/d_l_list.html'
+
+class DiscogsOrderListWidget(ListWidget):
+     template = 'widgets/d_o_list.html'

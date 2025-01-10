@@ -5,12 +5,12 @@ from flask_appbuilder.actions import action
 from flask_appbuilder.models.generic.interface import GenericInterface
 from app import appbuilder
 from app.models.inventory import Unit, PurchaseLot, StorageBox
-from app.models.discogs import DiscogsRelease, Artist, Genre, Style, Folder
+from app.models.discogs import DiscogsRelease, Artist, Genre, Style, Folder, DiscogsListing, DiscogsOrder
 from app.models.ebay import eBayListing, eBayOrder
 from app.models.sales import SalesReceipt
 from app.models.supplies import Supply, PurchaseOrder
 import logging
-from app.widgets import DiscogsReleaseListWidget, eBayListingListWidget, eBayOrderListWidget
+from app.widgets import DiscogsReleaseListWidget, eBayListingListWidget, eBayOrderListWidget, DiscogsListingListWidget, DiscogsOrderListWidget
 
 logger = logging.getLogger()
 
@@ -36,6 +36,7 @@ class UnitModelView(ModelView):
         'unit_type',
         'description',
         'discogs_release',
+        'discogs_listing',
         'ebay_listing',
         'purchase_lot',
         'storage_box',
@@ -179,6 +180,26 @@ class eBayOrderModelView(ModelView):
         'fmt_url': 'Order Id'
     }
     
+class DiscogsListingModelView(ModelView):
+    datamodel = MongoEngineInterface(DiscogsListing)
+    list_widget = DiscogsListingListWidget
+    list_columns = ['item_id', 'title', 'fmt_price', 'fmt_url']
+    search_columns = ['item_id', 'title']
+    label_columns = {
+        'fmt_price': 'Price',
+        'fmt_url': 'URL'
+    }
+
+class DiscogsOrderModelView(ModelView):
+    datamodel = MongoEngineInterface(DiscogsOrder)
+    list_widget = DiscogsOrderListWidget
+    list_columns = ['date', 'fmt_url', 'title', 'buyer', 'fmt_price']
+    search_columns = ['order_id', 'title', 'buyer']
+    label_columns = {
+        'fmt_price': 'Price',
+        'fmt_url': 'Order Id'
+    }
+    
 class SupplyModelView(ModelView):
     datamodel = MongoEngineInterface(Supply)
     list_columns = [
@@ -210,6 +231,8 @@ appbuilder.add_view(FolderModelView, "Folders", category="Discogs")
 appbuilder.add_view(SalesReceiptModelView, "Sales Receipts", category="Sales")
 appbuilder.add_view(eBayListingModelView, "eBay Listings", category="Sales")
 appbuilder.add_view(eBayOrderModelView, "eBay Orders", category="Sales")
+appbuilder.add_view(DiscogsListingModelView, "Discogs Listings", category="Sales")
+appbuilder.add_view(DiscogsOrderModelView, "Discogs Orders", category="Sales")
 appbuilder.add_view(SupplyModelView, "Supply List", category="Supplies")
 appbuilder.add_view(PurchaseOrderModelView, "Purchase Orders", category="Supplies")
 

@@ -1,4 +1,4 @@
-from app.models.discogs import Artist, Folder, Genre, Style, DiscogsRelease
+from app.models.discogs import Artist, Folder, Genre, Style, DiscogsRelease, DiscogsListing
 from app.models.ebay import eBayListing, eBayOrder
 from mongoengine import DoesNotExist
 import logging
@@ -114,3 +114,30 @@ def add_discogs_release(item):
             )
     discogs_release.save()
     logger.debug(discogs_release)
+
+def add_discogs_listing(item):
+    item_id = str(item.id)
+    price = float(item.price.value)
+    url = item.url
+    a = []
+    for artist in item.release.artists:
+        a.append(artist.name)
+    d = []
+    for f in item.release.formats:
+        d.append(', '.join(f['descriptions']))
+    l = []
+    for label in item.release.labels:
+        l.append(label.name)
+    title=' / '.join(a) + ' - ' + str(item.release.title) + ' (' + ', '.join(d) + ') (' + ', '.join(l) + ')'
+    
+    discogs_listing = DiscogsListing.objects(item_id=item_id).modify(
+            upsert = True,
+            new = True,
+            set__item_id = item_id,
+            set__price = price,
+            set__title = title,
+            set__url = url,
+            )
+    discogs_listing.save()
+    logger.info("Adding "+title)
+    logger.debug(discogs_listing)
