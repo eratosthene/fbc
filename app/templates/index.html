@@ -16,7 +16,6 @@
   </table>
 {% endcall %}
 {% call lib.accordion_tag("stockbystoragebox","Stock Details (by storage box)", False) %}
-<pre>{{ box_totals }}</pre>
   <table class="table table-bordered table-condensed table-hover" style="width: auto">
     <tr><th>Box</th><th>Stock</th></tr>
 {% for box in box_totals %}
