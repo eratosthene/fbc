@@ -53,18 +53,19 @@ class SalesReceiptModelView(ModelView):
     related_views = [ UnitModelView ]
     list_columns = [
         'date',
-        'fmt_ebay_order',
+        'link_column',
         'fmt_sold_price',
         'fmt_net_sold'
     ]
     label_columns = {
-        'fmt_ebay_order': 'eBay:Order',
+        'link_column': 'Order Link',
         'fmt_sold_price': 'Sold Price',
         'fmt_net_sold': 'Net Sold'
     }
     show_columns = [
         'date',
         'ebay_order',
+        'discogs_order',
         'sold_price',
         'net_sold'
     ]

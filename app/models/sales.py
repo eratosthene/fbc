@@ -47,7 +47,14 @@ class SalesReceipt(Document):
     def fmt_discogs_order(self, markup=True):
         ret = ''
         if self.discogs_order:
-            ret = '<a href="https://www.discogs.com/TODO?orderid=' + self.discogs_order.order_id + '">Discogs:Order&nbsp;$' + f"{self.discogs_order.price:.2f}" + '</a>'
+            ret = '<a href="https://www.discogs.com/sell/order/' + self.discogs_order.order_id + '">Discogs:Order&nbsp;$' + f"{self.discogs_order.price:.2f}" + '</a>'
+        if markup:
+            return Markup(ret)
+        else:
+            return ret
+    
+    def link_column(self, markup=True):
+        ret = self.fmt_ebay_order(False) + self.fmt_discogs_order(False)
         if markup:
             return Markup(ret)
         else:

@@ -254,3 +254,17 @@ class MyIndexView(IndexView):
         else:
             return redirect('/discogslistingmodelview/list/')
 
+    @expose('/syncdiscogsorders')
+    def syncdiscogsorders(self):
+        self.update_redirect()
+        logger.info('Updating Discogs orders...')
+        d = discogs_client.Client(current_app.config['DISCOGS_SETTINGS']['USER_AGENT'], user_token=current_app.config['DISCOGS_SETTINGS']['USER_TOKEN'])
+        me = d.identity()
+        orders = me.orders
+        for order in orders:
+            add_discogs_order(order)
+        ref = request.referrer
+        if ref:
+            return redirect(ref)
+        else:
+            return redirect('/ebaydiscogsmodelview/list/')

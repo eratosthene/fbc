@@ -1,4 +1,4 @@
-from app.models.discogs import Artist, Folder, Genre, Style, DiscogsRelease, DiscogsListing
+from app.models.discogs import Artist, Folder, Genre, Style, DiscogsRelease, DiscogsListing, DiscogsOrder
 from app.models.ebay import eBayListing, eBayOrder
 from mongoengine import DoesNotExist
 import logging
@@ -141,3 +141,33 @@ def add_discogs_listing(item):
     discogs_listing.save()
     logger.info("Adding "+title)
     logger.debug(discogs_listing)
+
+def add_discogs_order(order):
+    order_id = str(order.id)
+    price = float(order.data['total']['value'])
+    buyer = order.buyer.username
+    date = str(order.created)[:10]
+    a = []
+    for artist in order.items[0].release.artists:
+        a.append(artist.name)
+    d = []
+    for f in order.items[0].release.formats:
+        d.append(', '.join(f['descriptions']))
+    l = []
+    for label in order.items[0].release.labels:
+        l.append(label.name)
+    title=' / '.join(a) + ' - ' + str(order.items[0].release.title) + ' (' + ', '.join(d) + ') (' + ', '.join(l) + ')'
+    
+    discogs_order = DiscogsOrder.objects(order_id=order_id).modify(
+            upsert = True,
+            new = True,
+            set__order_id = order_id,
+            set__price = price,
+            set__buyer = buyer,
+            set__date = date,
+            set__title = title
+            )
+    discogs_order.save()
+    logger.info("Adding "+title)
+    logger.debug(discogs_order)
+    
