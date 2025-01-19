@@ -196,11 +196,14 @@ class MyIndexView(IndexView):
         logger.info('Updating eBay orders...')
         ebayconfig = current_app.config['EBAY_SETTINGS']
         try:
+            currentTime = datetime.datetime.now()+datetime.timedelta(days=1)
+            startTime = currentTime + datetime.timedelta(days=-10)
             api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
                           certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
 
             response = api.execute('GetOrders', {
-                'NumberOfDays': 10,
+                'CreateTimeFrom': str(startTime)[0:19],
+                'CreateTimeTo': str(currentTime)[0:19],
                 'OrderStatus': 'Completed'
             })
             self.doebaysync(api, response)
@@ -219,8 +222,8 @@ class MyIndexView(IndexView):
         logger.info('Deep updating eBay orders...')
         ebayconfig = current_app.config['EBAY_SETTINGS']
         try:
-            currentTime = datetime.datetime.now()+datetime.timedelta(hours = 7)
-            startTime = currentTime + datetime.timedelta(days = -89)
+            currentTime = datetime.datetime.now()+datetime.timedelta(days=1)
+            startTime = currentTime + datetime.timedelta(days=-88)
             api = Trading(debug=False, config_file=None, appid=ebayconfig['APP_ID'], domain='api.ebay.com',
                           certid=ebayconfig['CERT_ID'], devid=ebayconfig['DEV_ID'], token=ebayconfig['USER_TOKEN'])
 
