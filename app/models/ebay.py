@@ -52,3 +52,8 @@ class eBayOrder(Document):
         return Markup(
             '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.order_id + '">' + self.order_id + '</a>'
         )
+
+    def add_sr(self):
+        return Markup(
+            '<a href="' + url_for('SalesReceiptModelView.add', sold_price=self.price, ebay_order=self.order_id, date=self.date) + '">Add SR</a>'
+        )
