@@ -95,7 +95,10 @@ class PurchaseLot(Document):
     
     def compute_forecast(self, t, u):
         ret = {}
-        ret['breakeven'] = self.price / u['total'] / (1 - t['feepc'])
+        if u['total'] > 0:
+            ret['breakeven'] = self.price / u['total'] / (1 - t['feepc'])
+        else:
+            ret['breakeven'] = 0
         total_price = 0.0
         total_sold_price = 0.0
         total_num_sold = 0
@@ -106,7 +109,10 @@ class PurchaseLot(Document):
                 total_num_sold += 1
                 total_sold_price += unit.sales_receipt.sold_price
         ret['pprofit'] = total_price - (total_price * t['feepc']) - self.price
-        ret['avgsoldprice'] = total_sold_price / total_num_sold
+        if total_num_sold > 0:
+            ret['avgsoldprice'] = total_sold_price / total_num_sold
+        else:
+            ret['avgsoldprice'] = 0
         ret['avgppu'] = ret['avgsoldprice'] - ret['breakeven']
         ret['lprofit'] = u['total'] * ret['avgppu']
         return ret
