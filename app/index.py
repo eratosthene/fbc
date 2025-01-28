@@ -31,8 +31,8 @@ class MyIndexView(IndexView):
         unit_total = Unit.objects().count()
         lots=PurchaseLot.objects()
         boxes=StorageBox.objects()
-        box_totals = {}
         lot_totals = {}
+        box_totals = {}
         pos=PurchaseOrder.objects()
         supply_total = 0
         totals = {
@@ -44,19 +44,43 @@ class MyIndexView(IndexView):
             'profit': 0,
             'roi': 0
         }
+        for b in boxes:
+            box_totals[b.id] = {}
+            box_totals[b.id]['name'] = b.name
+            box_totals[b.id]['instock'] = Unit.objects(storage_box=b, sold=False).count()
+            box_totals[b.id]['capital'] = 0.0
+            box_totals[b.id]['gross'] = 0.0
+            box_totals[b.id]['net'] = 0.0
+        box_totals[0] = {}
+        box_totals[0]['name'] = 'No Box Assigned'
+        box_totals[0]['instock'] = Unit.objects(storage_box=b, sold=False).count()
+        box_totals[0]['capital'] = 0.0
+        box_totals[0]['gross'] = 0.0
+        box_totals[0]['net'] = 0.0
         for l in lots:
             totals['capital'] += l.price
             lot_totals[l.id] = {}
             lot_totals[l.id]['gross'] = 0
             lot_totals[l.id]['net'] = 0
+            lot_totals[l.id]['perunit'] = round(l.price / Unit.objects(purchase_lot=l).count(), 2)
         for po in pos:
             supply_total += po.price
         for u in Unit.objects():
             if u.sales_receipt:
-                lot_totals[u.purchase_lot.id]['gross'] += u.sales_receipt.sold_price 
+                if u.storage_box:
+                    box_totals[u.storage_box.id]['gross'] += u.sales_receipt.sold_price
+                    box_totals[u.storage_box.id]['net'] += u.sales_receipt.net_sold
+                else:
+                    box_totals[0]['gross'] += u.sales_receipt.sold_price
+                    box_totals[0]['net'] += u.sales_receipt.net_sold
+                lot_totals[u.purchase_lot.id]['gross'] += u.sales_receipt.sold_price
                 totals['gross'] += u.sales_receipt.sold_price
                 lot_totals[u.purchase_lot.id]['net'] += u.sales_receipt.net_sold
                 totals['net'] += u.sales_receipt.net_sold
+            if u.storage_box:
+                box_totals[u.storage_box.id]['capital'] += lot_totals[u.purchase_lot.id]['perunit']
+            else:
+                box_totals[0]['capital'] += lot_totals[u.purchase_lot.id]['perunit']
         for l in lots:
             lot_totals[l.id]['fees'] = round(lot_totals[l.id]['gross'] - lot_totals[l.id]['net'], 2)
             totals['fees'] += lot_totals[l.id]['fees']
@@ -70,6 +94,27 @@ class MyIndexView(IndexView):
                 lot_totals[l.id]['roi'] = round(lot_totals[l.id]['profit'] / l.price * 100, 2)
             else:
                 lot_totals[l.id]['roi'] = 0.0
+        for b in boxes:
+            box_totals[b.id]['fees'] = round(box_totals[b.id]['gross'] - box_totals[b.id]['net'], 2)
+            if box_totals[b.id]['gross'] > 0:
+                box_totals[b.id]['feepc'] = round(box_totals[b.id]['fees'] / box_totals[b.id]['gross'] * 100, 2)
+            else:
+                box_totals[b.id]['feepc'] = 0.0
+            box_totals[b.id]['profit'] = round(box_totals[b.id]['net'] - box_totals[b.id]['capital'], 2)
+            if box_totals[b.id]['capital'] > 0:
+                box_totals[b.id]['roi'] = round(box_totals[b.id]['profit'] / box_totals[b.id]['capital'] * 100, 2)
+            else:
+                box_totals[b.id]['roi'] = 0.0
+        box_totals[0]['fees'] = round(box_totals[0]['gross'] - box_totals[0]['net'], 2)
+        if box_totals[0]['gross'] > 0:
+            box_totals[0]['feepc'] = round(box_totals[0]['fees'] / box_totals[0]['gross'] * 100, 2)
+        else:
+            box_totals[0]['feepc'] = 0.0
+        box_totals[0]['profit'] = round(box_totals[0]['net'] - box_totals[0]['capital'], 2)
+        if box_totals[0]['capital'] > 0:
+            box_totals[0]['roi'] = round(box_totals[0]['profit'] / box_totals[0]['capital'] * 100, 2)
+        else:
+            box_totals[0]['roi'] = 0.0
         if totals['gross'] > 0:
             totals['feepc'] = round(totals['fees'] / totals['gross'] * 100, 2)
         else:
@@ -79,13 +124,6 @@ class MyIndexView(IndexView):
         total_net_profit = totals['profit'] - supply_total
         for l in lots:
             lot_totals[l.id]['instock'] = Unit.objects(purchase_lot=l, sold=False).count()
-        for b in boxes:
-            box_totals[b.id] = {}
-            box_totals[b.id]['name'] = b.name
-            box_totals[b.id]['instock'] = Unit.objects(storage_box=b, sold=False).count()
-        box_totals[0] = {}
-        box_totals[0]['name'] = 'None'
-        box_totals[0]['instock'] = Unit.objects(storage_box=None, sold=False).count()
         return self.render_template(self.index_template,
                 appbuilder=self.appbuilder,
                 stock_total=stock_total,

@@ -28,14 +28,14 @@
 {% endcall %}
   <h2>Total supply cost: {{ "${:,.2f}".format(supply_total|float) }}</h2>
 {% call lib.accordion_tag("supplydetails","Supply Details", False) %}
-  <h3>Supply cost per unit ({{ unit_total }} units): {{ "${:,.2f}".format(supply_total/unit_total|float) }}</h3>
-  <h4>Breakeven per unit, including supplies: {{ "${:,.2f}".format((totals['capital']/unit_total/(1-totals['feepc']/100))+(supply_total/unit_total)|float) }}</h4>
+  <p>Supply cost per unit ({{ unit_total }} units): {{ "${:,.2f}".format(supply_total/unit_total|float) }}</p>
+  <p>Breakeven per unit, including supplies: {{ "${:,.2f}".format((totals['capital']/unit_total/(1-totals['feepc']/100))+(supply_total/unit_total)|float) }}</p>
 {% endcall %}
   <h2>Total net profit:
   {% if (total_net_profit|float < 0) %}
      <span style="color:red">
   {% endif %}
-    {{ "${:,.2f}".format(total_net_profit|float) }}
+    {{ "${:,.2f}".format(total_net_profit|float) }} ({{ "{:,.2f}%".format(total_net_profit/totals['net']*100|float) }} profit margin)
   {% if (total_net_profit|float < 0) %}
      </span>
   {% endif %}
@@ -65,6 +65,21 @@
       <th>{{ "${:,.2f}".format(totals['profit']|float) }}</th>
       <th>{{ "{:,.2f}%".format(totals['roi']|float) }}</th>
     </tr>
+  </table>
+  <table class="table table-bordered table-condensed table-hover" style="width: auto">
+    <tr><th>Storage Box</th><th>Capital</th><th>Sold For</th><th>Fees</th><th>Fees %</th><th>Net Sold</th><th>Profit</th><th>ROI</th></tr>
+{% for box in box_totals %}
+    <tr>
+      <td>{{ box_totals[box]['name'] }}</td>
+      <td>{{ "${:,.2f}".format(box_totals[box]['capital']|float) }}</td>
+      <td>{{ "${:,.2f}".format(box_totals[box]['gross']|float) }}</td>
+      <td>{{ "${:,.2f}".format(box_totals[box]['fees']|float) }}</td>
+      <td>{{ "{:,.2f}%".format(box_totals[box]['feepc']|float) }}</td>
+      <td>{{ "${:,.2f}".format(box_totals[box]['net']|float) }}</td>
+      <td>{{ "${:,.2f}".format(box_totals[box]['profit']|float) }}</td>
+      <td>{{ "{:,.2f}%".format(box_totals[box]['roi']|float) }}</td>
+    </tr>
+{% endfor %}
   </table>
 {% endcall %}
 </div>
