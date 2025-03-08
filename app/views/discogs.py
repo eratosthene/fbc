@@ -1,5 +1,3 @@
-import logging
-
 from flask_appbuilder import ModelView
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 
@@ -14,8 +12,6 @@ from app.widgets import (
     DiscogsReleaseListWidget,
 )
 from app.views.inventory import UnitModelView
-
-logger = logging.getLogger()
 
 
 class DiscogsReleaseModelView(ModelView):

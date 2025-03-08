@@ -7,21 +7,22 @@ from flask_appbuilder.security.mongoengine.manager import SecurityManager
 from flask_mongoengine import MongoEngine
 
 from app.index import MyIndexView
-from app.views.inventory import UnitModelView
-from app.views.inventory import PurchaseLotModelView
-from app.views.inventory import StorageBoxModelView
-from app.views.discogs import DiscogsReleaseModelView
-from app.views.discogs import ArtistModelView
-from app.views.discogs import GenreModelView
-from app.views.discogs import StyleModelView
-from app.views.discogs import FolderModelView
-from app.views.sales import SalesReceiptModelView
-from app.views.sales import eBayListingModelView
-from app.views.sales import eBayOrderModelView
-from app.views.sales import DiscogsListingModelView
-from app.views.sales import DiscogsOrderModelView
-from app.views.supplies import SupplyModelView
-from app.views.supplies import PurchaseOrderModelView
+from app.views.inventory import UnitModelView, PurchaseLotModelView, StorageBoxModelView
+from app.views.discogs import (
+    DiscogsReleaseModelView,
+    ArtistModelView,
+    GenreModelView,
+    StyleModelView,
+    FolderModelView,
+)
+from app.views.sales import (
+    SalesReceiptModelView,
+    eBayListingModelView,
+    eBayOrderModelView,
+    DiscogsListingModelView,
+    DiscogsOrderModelView,
+)
+from app.views.supplies import SupplyModelView, PurchaseOrderModelView
 
 """
  Logging configuration

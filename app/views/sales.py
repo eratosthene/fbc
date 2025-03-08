@@ -1,5 +1,3 @@
-import logging
-
 from flask import request
 from flask_appbuilder import ModelView
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
@@ -18,8 +16,6 @@ from app.widgets import (
     eBayOrderListWidget,
 )
 from app.views.inventory import UnitModelView
-
-logger = logging.getLogger()
 
 
 class eBayListingModelView(ModelView):

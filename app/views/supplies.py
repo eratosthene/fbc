@@ -1,11 +1,7 @@
-import logging
-
 from flask_appbuilder import ModelView
 from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 
 from app.models.supplies import PurchaseOrder, Supply
-
-logger = logging.getLogger()
 
 
 class SupplyModelView(ModelView):
