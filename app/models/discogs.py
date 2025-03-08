@@ -2,7 +2,6 @@ import logging
 
 from flask import Markup, url_for
 from mongoengine import (
-    BooleanField,
     DictField,
     Document,
     FloatField,
@@ -97,7 +96,6 @@ class DiscogsRelease(Document):
         try:
             unit = Unit.objects().get(discogs_release=self)
             if unit:
-                pl = unit.purchase_lot
                 ret = unit.purchase_lot.name
         except Exception as e:
             logger.error(self.title)

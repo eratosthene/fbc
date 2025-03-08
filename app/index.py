@@ -1,24 +1,22 @@
 import datetime
 import logging
-import pprint
-import re
 
-import bson
 import discogs_client
-import ebaysdk
 from ebaysdk.exception import ConnectionError
 from ebaysdk.trading import Connection as Trading
-from ebaysdk.utils import getNodeText
 from flask import current_app, redirect, request
 from flask_appbuilder import IndexView
-from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 from flask_appbuilder.views import expose
 
 from app.models.discogs import DiscogsRelease
 from app.models.ebay import eBayListing, eBayOrder
 from app.models.inventory import PurchaseLot, StorageBox, Unit
 from app.models.supplies import PurchaseOrder
-from app.util import *
+from app.util import add_ebay_listing
+from app.util import add_ebay_order
+from app.util import add_discogs_release
+from app.util import add_discogs_listing
+from app.util import add_discogs_order
 
 logger = logging.getLogger()
 
@@ -61,13 +59,13 @@ class MyIndexView(IndexView):
         box_totals[0]["capital"] = 0.0
         box_totals[0]["gross"] = 0.0
         box_totals[0]["net"] = 0.0
-        for l in lots:
-            totals["capital"] += l.price
-            lot_totals[l.id] = {}
-            lot_totals[l.id]["gross"] = 0
-            lot_totals[l.id]["net"] = 0
-            lot_totals[l.id]["perunit"] = round(
-                l.price / Unit.objects(purchase_lot=l).count(), 2
+        for lot in lots:
+            totals["capital"] += lot.price
+            lot_totals[lot.id] = {}
+            lot_totals[lot.id]["gross"] = 0
+            lot_totals[lot.id]["net"] = 0
+            lot_totals[lot.id]["perunit"] = round(
+                lot.price / Unit.objects(purchase_lot=lot).count(), 2
             )
         for po in pos:
             supply_total += po.price
@@ -89,25 +87,27 @@ class MyIndexView(IndexView):
                 ]["perunit"]
             else:
                 box_totals[0]["capital"] += lot_totals[u.purchase_lot.id]["perunit"]
-        for l in lots:
-            lot_totals[l.id]["fees"] = round(
-                lot_totals[l.id]["gross"] - lot_totals[l.id]["net"], 2
+        for lot in lots:
+            lot_totals[lot.id]["fees"] = round(
+                lot_totals[lot.id]["gross"] - lot_totals[lot.id]["net"], 2
             )
-            totals["fees"] += lot_totals[l.id]["fees"]
-            if lot_totals[l.id]["gross"] > 0:
-                lot_totals[l.id]["feepc"] = round(
-                    lot_totals[l.id]["fees"] / lot_totals[l.id]["gross"] * 100, 2
+            totals["fees"] += lot_totals[lot.id]["fees"]
+            if lot_totals[lot.id]["gross"] > 0:
+                lot_totals[lot.id]["feepc"] = round(
+                    lot_totals[lot.id]["fees"] / lot_totals[lot.id]["gross"] * 100, 2
                 )
             else:
-                lot_totals[l.id]["feepc"] = 0.0
-            lot_totals[l.id]["profit"] = round(lot_totals[l.id]["net"] - l.price, 2)
-            totals["profit"] += lot_totals[l.id]["profit"]
-            if l.price > 0:
-                lot_totals[l.id]["roi"] = round(
-                    lot_totals[l.id]["profit"] / l.price * 100, 2
+                lot_totals[lot.id]["feepc"] = 0.0
+            lot_totals[lot.id]["profit"] = round(
+                lot_totals[lot.id]["net"] - lot.price, 2
+            )
+            totals["profit"] += lot_totals[lot.id]["profit"]
+            if lot.price > 0:
+                lot_totals[lot.id]["roi"] = round(
+                    lot_totals[lot.id]["profit"] / lot.price * 100, 2
                 )
             else:
-                lot_totals[l.id]["roi"] = 0.0
+                lot_totals[lot.id]["roi"] = 0.0
         for b in boxes:
             box_totals[b.id]["fees"] = round(
                 box_totals[b.id]["gross"] - box_totals[b.id]["net"], 2
@@ -150,9 +150,9 @@ class MyIndexView(IndexView):
         if totals["capital"] > 0:
             totals["roi"] = round(totals["profit"] / totals["capital"] * 100, 2)
         total_net_profit = totals["profit"] - supply_total
-        for l in lots:
-            lot_totals[l.id]["instock"] = Unit.objects(
-                purchase_lot=l, sold=False
+        for lot in lots:
+            lot_totals[lot.id]["instock"] = Unit.objects(
+                purchase_lot=lot, sold=False
             ).count()
         return self.render_template(
             self.index_template,

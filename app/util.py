@@ -1,9 +1,5 @@
 import logging
 
-import ebaysdk
-from ebaysdk.exception import ConnectionError
-from ebaysdk.trading import Connection as Trading
-from flask import current_app
 from mongoengine import DoesNotExist
 
 from app.models.discogs import (
@@ -137,9 +133,9 @@ def add_discogs_listing(item):
     d = []
     for f in item.release.formats:
         d.append(", ".join(f["descriptions"]))
-    l = []
+    lbl = []
     for label in item.release.labels:
-        l.append(label.name)
+        lbl.append(label.name)
     title = (
         " / ".join(a)
         + " - "
@@ -147,7 +143,7 @@ def add_discogs_listing(item):
         + " ("
         + ", ".join(d)
         + ") ("
-        + ", ".join(l)
+        + ", ".join(lbl)
         + ")"
     )
 
@@ -175,9 +171,9 @@ def add_discogs_order(order):
     d = []
     for f in order.items[0].release.formats:
         d.append(", ".join(f["descriptions"]))
-    l = []
+    lbl = []
     for label in order.items[0].release.labels:
-        l.append(label.name)
+        lbl.append(label.name)
     title = (
         " / ".join(a)
         + " - "
@@ -185,7 +181,7 @@ def add_discogs_order(order):
         + " ("
         + ", ".join(d)
         + ") ("
-        + ", ".join(l)
+        + ", ".join(lbl)
         + ")"
     )
 

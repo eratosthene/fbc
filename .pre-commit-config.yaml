@@ -43,9 +43,9 @@ repos:
             .*\{\{.*\}\}.*|     # Exclude any files with cookiecutter variable, this is an issue with ruff
           )$
       # STRICT
-      # - id: ruff
-      #   name: "🐍 python · Lint and perform safe auto-fixes with Ruff"
-      #   args: [--fix]
+      - id: ruff
+        name: "🐍 python · Lint and perform safe auto-fixes with Ruff"
+        args: [--fix]
 
   # STRICT
   # - repo: https://github.com/RobertCraigie/pyright-python
@@ -245,23 +245,22 @@ repos:
   # ---------------------------------------------------------------------------- #
   #                             🧪 Fast Tests (Local)                            #
   # ---------------------------------------------------------------------------- #
-#  - repo: local
-#    hooks:
-#      - id: pytest-collect
-#        name: 🧪 test · Validate test formatting
-#        entry: pytest tests
-#        language: system
-#        types: [python]
-#        args: ["--collect-only"]
-#        pass_filenames: false
-#        always_run: true
-#      # STRICT
-#      - id: pytest-fast
-#        name: 🧪 test · Run fast tests
-#        entry: ./.venv/bin/pytest tests
-#        language: system
-#        types: [python]
-#        args: ["--max-timeout=3"]
-#        pass_filenames: false
-#        always_run: true
-
+  #  - repo: local
+  #    hooks:
+  #      - id: pytest-collect
+  #        name: 🧪 test · Validate test formatting
+  #        entry: pytest tests
+  #        language: system
+  #        types: [python]
+  #        args: ["--collect-only"]
+  #        pass_filenames: false
+  #        always_run: true
+  #      # STRICT
+  #      - id: pytest-fast
+  #        name: 🧪 test · Run fast tests
+  #        entry: ./.venv/bin/pytest tests
+  #        language: system
+  #        types: [python]
+  #        args: ["--max-timeout=3"]
+  #        pass_filenames: false
+  #        always_run: true
