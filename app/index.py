@@ -57,7 +57,7 @@ class MyIndexView(IndexView):
             box_totals[b.id]["net"] = 0.0
         box_totals[0] = {}
         box_totals[0]["name"] = "No Box Assigned"
-        box_totals[0]["instock"] = Unit.objects(storage_box=b, sold=False).count()
+        box_totals[0]["instock"] = Unit.objects(storage_box=None, sold=False).count()
         box_totals[0]["capital"] = 0.0
         box_totals[0]["gross"] = 0.0
         box_totals[0]["net"] = 0.0
