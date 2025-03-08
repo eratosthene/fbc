@@ -1,8 +1,18 @@
-from mongoengine import Document
-from mongoengine import IntField, StringField, ListField, ReferenceField, BooleanField, DictField, FloatField
 from flask import Markup, url_for
-from app.models.ebay import eBayOrder
+from mongoengine import (
+    BooleanField,
+    DictField,
+    Document,
+    FloatField,
+    IntField,
+    ListField,
+    ReferenceField,
+    StringField,
+)
+
 from app.models.discogs import DiscogsOrder
+from app.models.ebay import eBayOrder
+
 
 class SalesReceipt(Document):
     date = StringField(required=True)
@@ -14,45 +24,57 @@ class SalesReceipt(Document):
     def __unicode__(self):
         ret = self.date
         if self.ebay_order:
-            ret = ret + ': ' + self.ebay_order.order_id
+            ret = ret + ": " + self.ebay_order.order_id
         if self.discogs_order:
-            ret = ret + ': ' + self.discogs_order.order_id
-        ret = ret + ' $' + f"{self.sold_price:.2f}" + '/$' + f"{self.net_sold:.2f}"
+            ret = ret + ": " + self.discogs_order.order_id
+        ret = ret + " $" + f"{self.sold_price:.2f}" + "/$" + f"{self.net_sold:.2f}"
         return ret
 
     def __repr__(self):
         ret = self.date
         if self.ebay_order:
-            ret = ret + ': ' + self.ebay_order.order_id
+            ret = ret + ": " + self.ebay_order.order_id
         if self.discogs_order:
-            ret = ret + ': ' + self.discogs_order.order_id
-        ret = ret + ' $' + f"{self.sold_price:.2f}" + '/$' + f"{self.net_sold:.2f}"
+            ret = ret + ": " + self.discogs_order.order_id
+        ret = ret + " $" + f"{self.sold_price:.2f}" + "/$" + f"{self.net_sold:.2f}"
         return ret
 
     def fmt_sold_price(self):
-        return '$' + f"{self.sold_price:.2f}"
-        
+        return "$" + f"{self.sold_price:.2f}"
+
     def fmt_net_sold(self):
-        return '$' + f"{self.net_sold:.2f}"
-        
+        return "$" + f"{self.net_sold:.2f}"
+
     def fmt_ebay_order(self, markup=True):
-        ret = ''
+        ret = ""
         if self.ebay_order:
-            ret = '<a href="https://www.ebay.com/mesh/ord/details?orderid=' + self.ebay_order.order_id + '">eBay:Order&nbsp;$' + f"{self.ebay_order.price:.2f}" + '</a>'
+            ret = (
+                '<a href="https://www.ebay.com/mesh/ord/details?orderid='
+                + self.ebay_order.order_id
+                + '">eBay:Order&nbsp;$'
+                + f"{self.ebay_order.price:.2f}"
+                + "</a>"
+            )
         if markup:
             return Markup(ret)
         else:
             return ret
 
     def fmt_discogs_order(self, markup=True):
-        ret = ''
+        ret = ""
         if self.discogs_order:
-            ret = '<a href="https://www.discogs.com/sell/order/' + self.discogs_order.order_id + '">Discogs:Order&nbsp;$' + f"{self.discogs_order.price:.2f}" + '</a>'
+            ret = (
+                '<a href="https://www.discogs.com/sell/order/'
+                + self.discogs_order.order_id
+                + '">Discogs:Order&nbsp;$'
+                + f"{self.discogs_order.price:.2f}"
+                + "</a>"
+            )
         if markup:
             return Markup(ret)
         else:
             return ret
-    
+
     def link_column(self, markup=True):
         ret = self.fmt_ebay_order(False) + self.fmt_discogs_order(False)
         if markup:
