@@ -17,6 +17,15 @@ class SalesReceipt(Document):
     sold_price = FloatField()
     net_sold = FloatField()
 
+    meta = {
+        "auto_create_index": False,
+        "index_background": True,
+        "indexes": [
+            "ebay_order",
+            "discogs_order",
+        ],
+    }
+
     def __unicode__(self):
         ret = self.date
         if self.ebay_order:

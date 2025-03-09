@@ -29,6 +29,18 @@ class DiscogsRelease(Document):
     notes = ListField(DictField())
     folder = ReferenceField("Folder")
 
+    meta = {
+        "auto_create_index": False,
+        "index_background": True,
+        "indexes": [
+            "title",
+            "artists",
+            "genres",
+            "styles",
+            "folder",
+        ],
+    }
+
     def artist_rep(self):
         num = 0
         ret = ""

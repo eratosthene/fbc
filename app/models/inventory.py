@@ -28,6 +28,21 @@ class Unit(Document):
     retail_price = FloatField()
     sold = BooleanField()
     sales_receipt = ReferenceField("SalesReceipt")
+    meta = {
+        "auto_create_index": False,
+        "index_background": True,
+        "indexes": [
+            "name",
+            "discogs_release",
+            "discogs_listing",
+            "ebay_listing",
+            "purchase_lot",
+            "storage_box",
+            "retail_price",
+            "sold",
+            "sales_receipt",
+        ],
+    }
 
     def __unicode__(self):
         return (
