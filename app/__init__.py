@@ -5,6 +5,7 @@ from flask import render_template
 from flask_appbuilder import AppBuilder
 from flask_appbuilder.security.mongoengine.manager import SecurityManager
 from flask_mongoengine import MongoEngine
+from flask_appbuilder.security.manager import AUTH_DB
 
 from app.index import MyIndexView
 from app.views.inventory import (
@@ -38,7 +39,8 @@ logging.basicConfig(format="%(asctime)s:%(levelname)s:%(name)s:%(message)s")
 logging.getLogger().setLevel(logging.INFO)
 
 app = Flask(__name__)
-app.config.from_envvar("FBC_SETTINGS")
+app.config.from_prefixed_env()
+app.config["AUTH_TYPE"] = AUTH_DB
 db = MongoEngine(app)
 appbuilder = AppBuilder(
     app, security_manager_class=SecurityManager, indexview=MyIndexView
