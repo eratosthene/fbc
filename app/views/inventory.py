@@ -3,6 +3,7 @@ from flask_appbuilder.models.mongoengine.interface import MongoEngineInterface
 from flask_appbuilder.models.mongoengine.filters import FilterEqual
 
 from app.models.inventory import PurchaseLot, StorageBox, Unit
+from app.util import CustomForm
 
 
 class UnitModelView(ModelView):
@@ -35,6 +36,10 @@ class UnitModelView(ModelView):
         "retail_price",
         "sold",
     ]
+
+    def _init_forms(self):
+        super(ModelView, self)._init_forms()
+        self.add_form = type("CustomForm", (CustomForm, self.add_form), {})
 
 
 class UnitModelNoListingView(ModelView):

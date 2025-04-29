@@ -1,4 +1,4 @@
-FROM ghcr.io/multi-py/python-gunicorn:py3.10-alpine-22.0.0
+FROM python:3.10-alpine
 
 RUN apk add --virtual .build-dependencies \
             --no-cache \
@@ -6,7 +6,7 @@ RUN apk add --virtual .build-dependencies \
             linux-headers \
             git
 
-RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade pip gunicorn
 COPY ./requirements.txt /app/requirements.txt
 
 RUN python -m pip install --no-cache-dir --upgrade -r /app/requirements.txt
@@ -16,10 +16,11 @@ RUN sed -i 's/int(pk)/str(pk)/g' /usr/local/lib/python3.10/site-packages/flask_a
 RUN apk del .build-dependencies && rm -rf /var/cache/apk/*
 
 COPY ./main.py /app/main.py
-COPY ./app app
+COPY ./app /app/app
 
 ENV STATIC_PATH=/usr/local/lib/python3.10/site-packages/flask_appbuilder/static
-ENV FLASK_RUN_PORT=20000
-ENV PORT=20000
-ENV WORKERS=8
+ENV LOG_LEVEL=info
 
+WORKDIR /app
+CMD [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:20000", "main:app" ]
+EXPOSE 20000

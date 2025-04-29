@@ -64,9 +64,12 @@ class MyIndexView(IndexView):
             lot_totals[lot.id] = {}
             lot_totals[lot.id]["gross"] = 0
             lot_totals[lot.id]["net"] = 0
-            lot_totals[lot.id]["perunit"] = round(
-                lot.price / Unit.objects(purchase_lot=lot).count(), 2
-            )
+            if Unit.objects(purchase_lot=lot).count() > 0:
+                lot_totals[lot.id]["perunit"] = round(
+                    lot.price / Unit.objects(purchase_lot=lot).count(), 2
+                )
+            else:
+                lot_totals[lot.id]["perunit"] = 0
         for po in pos:
             supply_total += po.price
         for u in Unit.objects():
@@ -255,7 +258,7 @@ class MyIndexView(IndexView):
         else:
             return redirect("/ebaylistingmodelview/list/")
 
-    def doebaysync(self, api, response):
+    def doebaysync(self, doupdate, api, response):
         logging.info("eBay response: " + api.response_status())
         resp = response.dict()
         orders = resp["OrderArray"]["Order"]
@@ -263,16 +266,22 @@ class MyIndexView(IndexView):
         logger.info("Total orders: " + str(len(orders)))
         logger.info("Total local orders: " + str(len(local_orders)))
         for item in orders:
-            # logger.info(item)
             logger.debug("Checking ebay: " + str(item["OrderID"]))
             if not eBayOrder.objects(order_id=item["OrderID"]):
                 logger.info("Adding " + str(item["OrderID"]))
                 add_ebay_order(item)
+            elif doupdate == "True":
+                logger.info("Updating " + str(item["OrderID"]))
+                add_ebay_order(item)
 
     @expose("/syncebayorders")
     def syncebayorders(self):
+        doupdate = request.args.get("doupdate")
         self.update_redirect()
-        logger.info("Updating eBay orders...")
+        if doupdate == "True":
+            logger.info("Updating eBay orders...")
+        else:
+            logger.info("Adding new eBay orders...")
         ebayconfig = current_app.config["EBAY_SETTINGS"]
         try:
             currentTime = datetime.datetime.now() + datetime.timedelta(days=1)
@@ -295,7 +304,7 @@ class MyIndexView(IndexView):
                     "OrderStatus": "Completed",
                 },
             )
-            self.doebaysync(api, response)
+            self.doebaysync(doupdate, api, response)
         except ConnectionError as e:
             logging.error(e)
             logging.error(e.response.dict())
@@ -331,7 +340,7 @@ class MyIndexView(IndexView):
                     "OrderStatus": "Completed",
                 },
             )
-            self.doebaysync(api, response)
+            self.doebaysync("True", api, response)
         except ConnectionError as e:
             logging.error(e)
             logging.error(e.response.dict())

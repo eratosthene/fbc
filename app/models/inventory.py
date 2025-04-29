@@ -109,6 +109,7 @@ class PurchaseLot(Document):
     date = StringField(required=True)
     price = FloatField(required=True)
     notes = StringField()
+    discogs_folder = ReferenceField("Folder")
 
     @renders("price")
     def purchase_price(self):

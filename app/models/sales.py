@@ -29,18 +29,46 @@ class SalesReceipt(Document):
     def __unicode__(self):
         ret = self.date
         if self.ebay_order:
-            ret = ret + ": " + self.ebay_order.order_id
+            ret = (
+                ret
+                + " ["
+                + self.ebay_order.order_id
+                + "|"
+                + self.ebay_order.title[:45]
+                + "] "
+            )
         if self.discogs_order:
-            ret = ret + ": " + self.discogs_order.order_id
+            ret = (
+                ret
+                + " ["
+                + self.discogs_order.order_id
+                + "|"
+                + self.discogs_order.title[:45]
+                + "] "
+            )
         ret = ret + " $" + f"{self.sold_price:.2f}" + "/$" + f"{self.net_sold:.2f}"
         return ret
 
     def __repr__(self):
         ret = self.date
         if self.ebay_order:
-            ret = ret + ": " + self.ebay_order.order_id
+            ret = (
+                ret
+                + " ["
+                + self.ebay_order.order_id
+                + "|"
+                + self.ebay_order.title[:45]
+                + "] "
+            )
         if self.discogs_order:
-            ret = ret + ": " + self.discogs_order.order_id
+            ret = (
+                ret
+                + " ["
+                + self.discogs_order.order_id
+                + "|"
+                + self.discogs_order.title[:45]
+                + "] "
+            )
         ret = ret + " $" + f"{self.sold_price:.2f}" + "/$" + f"{self.net_sold:.2f}"
         return ret
 

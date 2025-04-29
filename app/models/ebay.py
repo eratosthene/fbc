@@ -5,6 +5,7 @@ from mongoengine import (
     Document,
     FloatField,
     StringField,
+    ReferenceField,
 )
 
 logger = logging.getLogger()
@@ -35,6 +36,7 @@ class eBayOrder(Document):
     buyer = StringField()
     price = FloatField()
     title = StringField()
+    ebay_listing = ReferenceField("eBayListing")
 
     def __unicode__(self):
         if self.title:
@@ -96,8 +98,8 @@ class eBayOrder(Document):
             + "</a>"
         )
 
-    def add_sr(self):
-        return Markup(
+    def links(self):
+        retval = (
             '<a href="'
             + url_for(
                 "SalesReceiptModelView.add",
@@ -107,3 +109,16 @@ class eBayOrder(Document):
             )
             + '">Add SR</a>'
         )
+        if self.ebay_listing:
+            from app.models.inventory import Unit as u
+
+            obj = u.objects(ebay_listing=self.ebay_listing)
+            for uu in obj:
+                retval = (
+                    retval
+                    + '<br><a href="'
+                    + url_for("UnitModelView.edit", pk=uu.id)
+                    + '">Unit</a>'
+                )
+
+        return Markup(retval)

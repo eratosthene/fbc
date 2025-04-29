@@ -12,6 +12,8 @@ from app.models.discogs import (
     Style,
 )
 from app.models.ebay import eBayListing, eBayOrder
+from flask import request
+from flask_wtf import FlaskForm
 
 logger = logging.getLogger()
 
@@ -49,16 +51,33 @@ def add_ebay_order(item):
     buyer = item["BuyerUserID"]
     date = item["CreatedTime"][:10]
     title = item["TransactionArray"]["Transaction"][0]["Item"]["Title"]
+    ebay_listing_id = item["TransactionArray"]["Transaction"][0]["Item"]["ItemID"]
+    from app.models.ebay import eBayListing as ebl
 
-    ebay_order = eBayOrder.objects(order_id=order_id).modify(
-        upsert=True,
-        new=True,
-        set__order_id=order_id,
-        set__price=price,
-        set__buyer=buyer,
-        set__date=date,
-        set__title=title,
-    )
+    obj = ebl.objects(item_id=ebay_listing_id)
+    if obj.count() == 0:
+        logger.warn("No eBay listing in DB for " + str(ebay_listing_id))
+        ebay_order = eBayOrder.objects(order_id=order_id).modify(
+            upsert=True,
+            new=True,
+            set__order_id=order_id,
+            set__price=price,
+            set__buyer=buyer,
+            set__date=date,
+            set__title=title,
+        )
+    for ebay_listing in obj:
+        logger.info("Found eBay listing " + str(ebay_listing))
+        ebay_order = eBayOrder.objects(order_id=order_id).modify(
+            upsert=True,
+            new=True,
+            set__order_id=order_id,
+            set__price=price,
+            set__buyer=buyer,
+            set__date=date,
+            set__title=title,
+            set__ebay_listing=ebay_listing,
+        )
     ebay_order.save()
     logger.debug(ebay_order)
 
@@ -197,3 +216,18 @@ def add_discogs_order(order):
     discogs_order.save()
     logger.info("Adding " + title)
     logger.debug(discogs_order)
+
+
+class CustomForm(FlaskForm):
+    """
+    A custom FlaskForm which reads data from request params
+    """
+
+    @classmethod
+    def refresh(cls, obj=None):
+        kw = dict(obj=obj)
+        if request.method == "GET":
+            kw["formdata"] = request.args
+            logger.info(request.args)
+        form = cls(**kw)
+        return form

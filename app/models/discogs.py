@@ -1,4 +1,5 @@
 import logging
+import re
 
 from flask import Markup, url_for
 from mongoengine import (
@@ -90,15 +91,43 @@ class DiscogsRelease(Document):
         else:
             return s
 
+    def unit_add(self, markup=True):
+        grading = ""
+        for d in self.notes:
+            if d["field_id"] == 1:
+                m = re.search(".*\((.*)\)", d["value"])
+                if m:
+                    grading = grading + m.group(1)
+            elif d["field_id"] == 2:
+                m = re.search(".*\((.*)\)", d["value"])
+                if m:
+                    grading = grading + "/" + m.group(1)
+        s = (
+            '<a href="'
+            + url_for(
+                "UnitModelView.add",
+                name=str(self),
+                unit_type='12" LP"',
+                grading=grading,
+                discogs_release=self.pk,
+            )
+            + '">AddUnit</a>'
+        )
+        if markup:
+            return Markup(s)
+        else:
+            return s
+
     def link_column(self):
         return Markup(
-            "<ul><li>"
-            + self.release_show(False)
-            + "</li><li>"
+            self.release_show(False)
+            + "<br>"
             + self.master_show(False)
-            + "</li><li>"
+            + "<br>"
             + self.unit_list(False)
-            + "</li></ul>"
+            + "<br>"
+            + self.unit_add(False)
+            + "<br>"
         )
 
     def purchase_lot(self):
