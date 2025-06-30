@@ -107,7 +107,7 @@ class DiscogsRelease(Document):
             + url_for(
                 "UnitModelView.add",
                 name=str(self),
-                unit_type='12" LP"',
+                unit_type='12" LP',
                 grading=grading,
                 discogs_release=self.pk,
             )

@@ -192,16 +192,19 @@ class MyIndexView(IndexView):
         for item in local_releases:
             logger.debug("Checking local: " + str(item))
             if not any(x.instance_id == item.instance_id for x in releases):
-                o = Unit.objects().get(discogs_release=item)
-                if isinstance(o, Unit):
-                    logger.info("Updating " + str(o))
-                    del o.discogs_release
-                    o.save()
-                else:
-                    for unit in o:
-                        logger.info("Updating " + str(unit))
-                        del unit.discogs_release
-                        unit.save()
+                try:
+                    o = Unit.objects().get(discogs_release=item)
+                    if isinstance(o, Unit):
+                        logger.info("Updating " + str(o))
+                        del o.discogs_release
+                        o.save()
+                    else:
+                        for unit in o:
+                            logger.info("Updating " + str(unit))
+                            del unit.discogs_release
+                            unit.save()
+                except:
+                    pass
                 logger.info("Removing " + str(item))
                 item.delete()
 
@@ -216,42 +219,49 @@ class MyIndexView(IndexView):
         self.update_redirect()
         logger.info("Updating eBay listings...")
         ebayconfig = current_app.config["EBAY_SETTINGS"]
-        try:
-            api = Trading(
-                debug=False,
-                config_file=None,
-                appid=ebayconfig["APP_ID"],
-                domain="api.ebay.com",
-                certid=ebayconfig["CERT_ID"],
-                devid=ebayconfig["DEV_ID"],
-                token=ebayconfig["USER_TOKEN"],
-            )
+        totalpages = 1
+        currentpage = 1
+        while currentpage <= totalpages:
+            logger.info("Getting page "+str(currentpage)+"...")
+            try:
+                api = Trading(
+                    debug=False,
+                    config_file=None,
+                    appid=ebayconfig["APP_ID"],
+                    domain="api.ebay.com",
+                    certid=ebayconfig["CERT_ID"],
+                    devid=ebayconfig["DEV_ID"],
+                    token=ebayconfig["USER_TOKEN"],
+                )
 
-            response = api.execute(
-                "GetMyeBaySelling",
-                {
-                    "ActiveList": {
-                        "Include": True,
-                        "Sort": "StartTime",
-                        "Pagination": {"EntriesPerPage": 200, "PageNumber": 1},
-                    }
-                },
-            )
-            logging.info("eBay response: " + api.response_status())
-            resp = response.dict()
-            listings = resp["ActiveList"]["ItemArray"]["Item"]
-            local_listings = eBayListing.objects()
-            logger.info("Total listings: " + str(len(listings)))
-            logger.info("Total local listings: " + str(len(local_listings)))
-            for item in listings:
-                # logger.info(item)
-                logger.debug("Checking ebay: " + str(item["ItemID"]))
-                if not eBayListing.objects(item_id=item["ItemID"]):
-                    logger.info("Adding " + str(item["ItemID"]))
-                    add_ebay_listing(item)
-        except ConnectionError as e:
-            logging.error(e)
-            logging.error(e.response.dict())
+                response = api.execute(
+                    "GetMyeBaySelling",
+                    {
+                        "ActiveList": {
+                            "Include": True,
+                            "Sort": "StartTime",
+                            "Pagination": {"EntriesPerPage": 200, "PageNumber": currentpage},
+                        }
+                    },
+                )
+                logging.info("eBay response: " + api.response_status())
+                resp = response.dict()
+                totalpages = int(resp["ActiveList"]["PaginationResult"]["TotalNumberOfPages"])
+                logging.info("Total pages: "+str(totalpages))
+                listings = resp["ActiveList"]["ItemArray"]["Item"]
+                local_listings = eBayListing.objects()
+                logger.info("Total listings: " + str(len(listings)))
+                logger.info("Total local listings: " + str(len(local_listings)))
+                for item in listings:
+                    # logger.info(item)
+                    logger.debug("Checking ebay: " + str(item["ItemID"]))
+                    if not eBayListing.objects(item_id=item["ItemID"]):
+                        logger.info("Adding " + str(item["ItemID"]))
+                        add_ebay_listing(item)
+            except ConnectionError as e:
+                logging.error(e)
+                logging.error(e.response.dict())
+            currentpage += 1
         ref = request.referrer
         if ref:
             return redirect(ref)
